@@ -18,13 +18,35 @@ def load_generated_nops(file_path):
         return []
     return data
 
-def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_options, tahun_pajak):
+def load_znt_data(file_path, tahun_pajak):
+    try:
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+        print("ZNT JSON file is valid.")
+    except json.JSONDecodeError as e:
+        print(f"JSONDecodeError: {e}")
+        return []
+    
+    # Filter ZNT options based on the provided tahun_pajak
+    filtered_znt_options = [
+        entry['znt_code'] for entry in data 
+        if entry['znt_year'] == tahun_pajak
+    ]
+    
+    return filtered_znt_options
+
+def save_pbb_wajib_pajak(data, file_path):
+    with open(file_path, 'w') as f:
+        json.dump(data, f, indent=4)
+
+def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_options, op_nilai_bgn_options, tahun_pajak):
     generated_nops = load_generated_nops('GENERATED_DATA/generated_nop.json')
     total_nops = len(generated_nops)
     
     records = []
+    data_wp_list = []  # List to store data_wp entries
     generated_keys = set()  # Initialize as an empty set to store unique (nop, tahun_pajak) pairs
-    max_attempts = 10000  # Maximum number of attempts to generate a unique record
+    max_attempts = 100  # Define max_attempts here
 
     with tqdm(total=min(total_nops, num_records), desc="Generating Data") as pbar:
         while len(records) < total_nops and len(records) < num_records:
@@ -34,11 +56,6 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
                 nop_entry = random.choice(generated_nops)
                 nop = nop_entry['nop']
                 
-                # Check if (nop, tahun_pajak) pair is already generated
-                if (nop, tahun_pajak) in generated_keys:
-                    attempts += 1
-                    continue
-
                 # Extract components from NOP
                 kab_code = nop[:4]
                 kecamatan_code = int(nop[4:7])
@@ -50,6 +67,11 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
                 wp_pekerjaan = random.choice(wp_pekerjaan_options)
                 wp_status = random.choice(wp_status_options)
                 op_znt = random.choice(op_znt_options)
+                op_nilai_bgn = random.choice(op_nilai_bgn_options)
+                if op_nilai_bgn == "Manual":
+                    op_nilai_bgn_value = random.randint(0, 100000)
+                else:
+                    op_nilai_bgn_value = 0
 
                 op_kecamatan_nama = fake.city().upper()  # Example of fake data for kecamatan_nama
                 op_kelurahan_nama = fake.city().upper()  # Example of fake data for kelurahan_nama
@@ -65,9 +87,6 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
                 code = str(random.choice([0, 7]))
                 nik = f"{kab_code}{kecamatan_code:02d}{born_date}{no_urut}{code}"
                 nik = nik[:16]
-
-                # Generate kelas_bumi
-                kelas_bumi = f"B{random.randint(1, 10)}"  # Example generation logic
 
                 # Generate record
                 record = {
@@ -95,7 +114,7 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
                         "op_kelurahan_kode": kelurahan_code,
                         "op_kecamatan_nama": op_kecamatan_nama,
                         "op_kelurahan_nama": op_kelurahan_nama,
-                        "op_alamat": f"BLOK. {blok}",
+                        "op_alamat": fake.street_address() + f" BLOK. {blok}",
                         "op_rt": 0,
                         "op_rw": 0,
                         "op_kodepos": fake.postcode()
@@ -104,77 +123,82 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
                         "op_jenis_tanah": op_jenis_tanah,
                         "op_znt": op_znt,
                         "op_dafnom": op_dafnom,
+                        "op_jml_bgn": random.randint(1, 10),
                         "op_luas_bumi": random.randint(1000, 3000),
                         "op_luas_bgn": random.randint(10, 100),
-                        "op_jml_bgn": random.randint(1, 10)
+                        "op_status_nilai_bgn" : op_nilai_bgn,
+                        "op_nilai_bgn" : op_nilai_bgn_value
                     },
                     "data_penetapan": {
-                        "op_kelas_bumi": kelas_bumi,
-                        "op_kelas_bgn": f"A{random.randint(80, 100)}",
+                        "op_kelas_bumi": "",
+                        "op_kelas_bgn": "",
                         "op_njop_bumi": 0,
-                        "op_njop_bgn": random.randint(1000000, 2000000),
-                        "op_njoptkp": 1000000,
-                        "op_njkp_b4_pengenaan": random.randint(2000000, 3000000),
-                        "op_persen_pengenaan": random.randint(20, 30),
-                        "op_njkp_after_pengenaan": random.randint(1000000, 1500000),
-                        "op_tarif": random.choice([0.100, 0.200, 0.300, 0.400, 0.500]),
-                        "sebelum_stimulus": random.randint(50000, 100000),
-                        "pengali_stimulus": 10,
-                        "pengurang_stimulus": random.randint(20000, 50000),
-                        "selisih_stimulus": random.randint(20000, 50000),
-                        "ketetapan_bayar": random.randint(50000, 100000),
+                        "op_njop_bgn": 0,
+                        "op_njoptkp": 0,
+                        "op_njkp_b4_pengenaan": 0,
+                        "op_persen_pengenaan": 0,
+                        "op_njkp_after_pengenaan": 0,
+                        "op_tarif": 0,
+                        "sebelum_stimulus": 0,
+                        "pengali_stimulus": 0,
+                        "pengurang_stimulus": 0,
+                        "selisih_stimulus": 0,
+                        "ketetapan_bayar": 0,
                         "tanggal_penetapan": {
-                            "$date": fake.date_time_this_year().isoformat()
+                            "$date": None
                         },
-                        "user_penetapan": fake.user_name(),
+                        "user_penetapan": "",
                         "tanggal_terbit": {
-                            "$date": fake.date_time_this_year().isoformat()
+                            "$date": None
                         },
                         "jatuh_tempo": {
-                            "$date": fake.date_time_this_year().isoformat()
+                            "$date": None
                         },
                         "user_input": fake.user_name(),
                         "createdAt": {
-                            "$date": fake.date_time_this_year().isoformat()
+                            "$date": None
                         },
                         "updatedAt": {
-                            "$date": fake.date_time_this_year().isoformat()
+                            "$date": None
                         }
                     },
                     "data_pembayaran": {
                         "payment_code": {
-                            "$numberLong": str(random.randint(90000000000, 99999999999))
+                            "$numberLong": 0
                         },
                         "payment_coll_code": {
-                            "$numberLong": str(random.randint(1900000000000, 1999999999999))
+                            "$numberLong": 0
                         },
-                        "payment_flag_status": 1,
+                        "payment_flag_status": 0,
                         "payment_deduction": False,
                         "payment_installment": False,
                         "payment_compensation": False,
                         "payment_flag": True,
                         "payment_paid": {
-                            "$date": fake.date_time_this_year().isoformat()
+                            "$date": None
                         },
-                        "payment_settlement_date": fake.date_time_this_year().strftime('%Y%m%d'),
-                        "bank_code": random.randint(600000, 700000),
-                        "merchant_code": random.randint(800, 900),
-                        "channel_code": random.randint(800, 900),
-                        "payment_ref_num": str(uuid.uuid4()),
-                        "payment_gw_refnum": str(uuid.uuid4()),
-                        "payment_sw_refnum": str(uuid.uuid4()),
-                        "payment_amount": random.randint(50000, 100000),
+                        "payment_settlement_date": None, ## fake.date_time_this_year().strftime('%Y%m%d')
+                        "bank_code": None,
+                        "merchant_code": None,
+                        "channel_code": None,
+                        "payment_ref_num": None, ## str(uuid.uuid4()) -> UUID if payment_flag_status = 1
+                        "payment_gw_refnum": None, ## str(uuid.uuid4()) -> UUID if payment_flag_status = 1
+                        "payment_sw_refnum": None, ## str(uuid.uuid4()) -> UUID if payment_flag_status = 1
+                        "payment_amount": 0,
                         "payment_amount_ded": 0,
-                        "payment_penalty": random.randint(5000, 15000),
+                        "payment_penalty": 0,
                         "payment_penalty_ded": 0,
-                        "payment_total": random.randint(50000, 100000),
-                        "user_payment": fake.user_name(),
-                        "installment_flag": 1,
+                        "payment_total": 0,
+                        "user_payment": None, ## if payment_flag_status = 1
+                        "installment_flag": 0,
                         "booking_expired": {
-                            "$date": fake.date_time_this_year().isoformat()
+                            "$date": None
                         }
                     }
                 }
+
+                # Append data_wp to data_wp_list
+                data_wp_list.append(record["data_wp"])
 
                 generated_keys.add((nop, tahun_pajak))
                 records.append(record)
@@ -184,6 +208,9 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
             if attempts == max_attempts:
                 print("Max attempts reached, skipping record generation.")
                 break  # Break out of records generation loop if max attempts reached
+
+    # Save data_wp_list to a separate file
+    save_pbb_wajib_pajak(data_wp_list, f'DATA_SW/pbb_data_wp_{tahun_pajak}.json')
 
     return records
 
@@ -206,15 +233,18 @@ if __name__ == "__main__":
 
     WP_PEKERJAAN_OPTIONS = ["PNS", "Swasta", "Wiraswasta", "Lainnya"]
     WP_STATUS_OPTIONS = ["Pemakai","Pemilik","Pengelola","Penyewa","Sengketa"]
-    OP_ZNT_OPTIONS = ["A", "B", "C", "D"]
+    
+    # Load ZNT options based on tahun_pajak
+    OP_ZNT_OPTIONS = load_znt_data('GENERATED_DATA/znt_data.json', args.tahun_pajak)
+    OP_NILAI_BGN_OPTIONS = ["System", "Manual"]
 
     # Load generated NOPs to determine the number of records
     generated_nops = load_generated_nops('GENERATED_DATA/generated_nop.json')
     num_records = len(generated_nops)
 
     start_time = time.time()
-    generated_data = generate_data(num_records, WP_PEKERJAAN_OPTIONS, WP_STATUS_OPTIONS, OP_ZNT_OPTIONS, args.tahun_pajak)
-    save_data(generated_data, "DATA_OP", f"pbb_data_{args.tahun_pajak}.json")
+    generated_data = generate_data(num_records, WP_PEKERJAAN_OPTIONS, WP_STATUS_OPTIONS, OP_ZNT_OPTIONS, OP_NILAI_BGN_OPTIONS, args.tahun_pajak)
+    save_data(generated_data, "DATA_SW", f"pbb_data_{args.tahun_pajak}.json")
     end_time = time.time()
 
     print(f"Data generation completed in {end_time - start_time:.2f} seconds")

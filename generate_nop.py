@@ -11,10 +11,10 @@ def load_kecamatan_kelurahan_data(file_path):
 
 # Function to calculate maximum possible number of NOPs
 def calculate_max_nops(kecamatan_kelurahan_data):
-    n_kelurahan = sum(len(kecamatan['kelurahan']) for kecamatan in kecamatan_kelurahan_data.values())
+    n_kelurahan = sum(len([kelurahan for kelurahan in kecamatan['kelurahan'] if kelurahan.get('status_kel', False)]) 
+                      for kecamatan in kecamatan_kelurahan_data.values())
     total_blok = 20  # 001 to 999
     total_no_urut = 999  # 0001 to 999
-    # total_tanah = 1  # Only 0 for kode_tanah
     
     max_nops = n_kelurahan * (total_blok * total_no_urut)
     return max_nops
@@ -39,6 +39,9 @@ def generate_nop_and_write(kode_kab, count, kecamatan_kelurahan_data, kode_blok_
                 # Iterate through each kelurahan
                 for kecamatan_code, kecamatan_info in kecamatan_kelurahan_data.items():
                     for kelurahan_info in kecamatan_info['kelurahan']:
+                        if not kelurahan_info.get('status_kel', False):  # Check if status_kel is true
+                            continue  # Skip if status_kel is false
+                        
                         nop, current_no_urut = generate_nop(kode_kab, kecamatan_code, kelurahan_info, total_no_urut, current_blok, current_no_urut)
                         
                         if nop in generated_nops:
@@ -69,6 +72,9 @@ def generate_nop_and_write(kode_kab, count, kecamatan_kelurahan_data, kode_blok_
                         if current_no_urut > total_no_urut:
                             current_blok += 1
                             current_no_urut = 1  # Reset to 0001 if exceeds 999
+                
+                if written_count >= count:
+                    break  # Exit while loop if written_count reaches the required count
         
         # Write all NOP data to file as a JSON array
         file.write(json.dumps(nop_data_list, indent=4))

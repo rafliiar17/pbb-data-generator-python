@@ -1,14 +1,23 @@
+import json
 import subprocess
 from tqdm import tqdm
 
+def load_config(file_path):
+    with open(file_path, 'r') as f:
+        config = json.load(f)
+    return config
+
 if __name__ == "__main__":
-    # Input tax year
-    kab_code = input("Enter the kab_code (e.g., 8081): ")
-    num_kecamatan = int(input("Enter the number of kecamatan (e.g., 5): "))
-    num_kelurahan_per_kecamatan = int(input("Enter the number of kelurahan per kecamatan (e.g., 9): "))
-    min_year = int(input("Enter ZNT/KELAS the min year (e.g., 2023): "))
-    max_year = int(input("Enter ZNT/KELAS the max year (e.g., 2023): "))
-    tahun_pajak = int(input("Enter DATA OP the tahun pajak (e.g., 2023): "))
+    # Load configuration from config.json
+    config = load_config('config.json')
+
+    # Extract values from config
+    kab_code = config["kab_code"]
+    num_kecamatan = config["kec_kel"]["number_kecamatan"]
+    num_kelurahan_per_kecamatan = config["kec_kel"]["number_kelurahan"]
+    min_year = config["year"]["min_year"]
+    max_year = config["year"]["max_year"]
+    tahun_pajak = config["tahun_pajak"]
 
     # Define the commands to be executed with the tax year passed as argument
     commands = [

@@ -1,0 +1,13 @@
+{   "AppName" : "PBB",
+    "kab_code": "3204",
+    "kab_name": "KAB. BANTENG",
+    "kec_kel": {
+        "number_kecamatan": 1,
+        "number_kelurahan": 2
+    },
+    "year": {
+        "min_year": 1993,
+        "max_year": 2024
+    },
+    "tahun_pajak" : 2024
+}

@@ -1,0 +1,22 @@
+{
+    "3204001": {
+        "kecamatan_code": 3204001,
+        "kecamatan_nama": "Jacobton",
+        "sektor_kec": 10,
+        "status_kec": true,
+        "kelurahan": [
+            {
+                "kelurahan_code": 3204001001,
+                "kelurahan_nama": "Rivera Spring",
+                "sektor_kel": 10,
+                "status_kel": true
+            },
+            {
+                "kelurahan_code": 3204001002,
+                "kelurahan_nama": "Brown Union",
+                "sektor_kel": 20,
+                "status_kel": false
+            }
+        ]
+    }
+}

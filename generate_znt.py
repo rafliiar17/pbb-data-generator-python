@@ -23,6 +23,9 @@ def generate_znt_data(tahun_pajak_range, kecamatan_kelurahan_data):
 
     for kecamatan_code, kecamatan_info in kecamatan_kelurahan_data.items():
         for kelurahan in kecamatan_info.get('kelurahan', []):
+            if not kelurahan.get('status_kel', False):  # Check if status_kel is true
+                continue  # Skip if status_kel is false
+
             kelurahan_code = kelurahan['kelurahan_code']
             possible_combinations = list(OP_ZNT_OPTIONS)  # Create a copy of OP_ZNT_OPTIONS for each kelurahan_code
             random.shuffle(possible_combinations)

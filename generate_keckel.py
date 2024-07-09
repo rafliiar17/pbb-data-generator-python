@@ -12,11 +12,13 @@ def generate_kecamatan_kelurahan_data(kab_code, num_kecamatan, num_kelurahan_per
         kecamatan_code = int(f"{int(kab_code)}{kecamatan_index:03d}")
         kecamatan_nama = fake.city()
 
+        status_kec = random.choice([True, False])  # Generate status_kec here
+
         kecamatan_record = {
             "kecamatan_code": kecamatan_code,
             "kecamatan_nama": kecamatan_nama,
             "sektor_kec": random.choice([10, 20]),
-            "status_kec": random.choice([True, False]),
+            "status_kec": status_kec,
             "kelurahan": []
         }
 
@@ -24,11 +26,14 @@ def generate_kecamatan_kelurahan_data(kab_code, num_kecamatan, num_kelurahan_per
             kelurahan_code = int(f"{kecamatan_code}{kelurahan_index:03d}")
             kelurahan_nama = fake.street_name()
 
+            # Set status_kel based on status_kec
+            status_kel = status_kec if not status_kec else random.choice([True, False])
+
             kelurahan_record = {
                 "kelurahan_code": kelurahan_code,
                 "kelurahan_nama": kelurahan_nama,
                 "sektor_kel": random.choice([10, 20]),
-                "status_kel": random.choice([True, False])
+                "status_kel": status_kel
             }
             kecamatan_record["kelurahan"].append(kelurahan_record)
 
