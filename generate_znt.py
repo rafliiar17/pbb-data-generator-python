@@ -35,11 +35,11 @@ def generate_znt_data(tahun_pajak_range, kecamatan_kelurahan_data):
                     key = (kelurahan_code, znt_code)
 
                     # Fetch previous nir value or initialize to 1000 if not present
-                    previous_nir = previous_nir_dict.get(key, random.randint(1000, 1000000))
+                    previous_nir = previous_nir_dict.get(key, random.randint(100, 300))
 
                     znt_entry = {
-                        "kecamatan_code": kecamatan_code,
-                        "kelurahan_code": kelurahan_code,
+                        "kecamatan_code": int(kecamatan_code),
+                        "kelurahan_code": int(kelurahan_code),
                         "znt_code": znt_code,
                         "znt_year": tahun_pajak,
                         "nir": previous_nir  # Set nir value
@@ -48,7 +48,7 @@ def generate_znt_data(tahun_pajak_range, kecamatan_kelurahan_data):
                     znt_data.append(znt_entry)
 
                     # Update previous_nir_dict for the current combination
-                    previous_nir_dict[key] = previous_nir + 1000  # Increment nir by 1000 for the next entry
+                    previous_nir_dict[key] = previous_nir + 10  # Increment nir by 1000 for the next entry
 
     return znt_data
 

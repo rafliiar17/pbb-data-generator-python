@@ -6,13 +6,13 @@ def generate_kelas_bumi_data(min_year, max_year):
     kelas_bumi_data = []
 
     # Limit num_records to 150
-    num_records = 150
+    num_records = 250
 
     for i in range(num_records):
         kelas_bumi = f"A{i + 1}"
-        mnvalue = round(random.uniform(1000000, 2000000), 2)
-        mxvalue = round(random.uniform(2000000, 3000000), 2)
-        avgvalue = round((mnvalue + mxvalue) / 2, 2)
+        mnvalue = round(random.uniform(100, 200), 0)
+        mxvalue = round(random.uniform(201, 300), 0)
+        avgvalue = round((mnvalue + mxvalue) / 2, 0)
 
         record = {
             "kelas_bumi": kelas_bumi,
@@ -30,13 +30,13 @@ def generate_kelas_bangunan_data(min_year, max_year):
     kelas_bgn_data = []
 
     # Limit num_records to 150
-    num_records = 150
+    num_records = 250
 
     for i in range(num_records):
         kelas_bgn = f"A{i + 1}"
-        mnvalue = round(random.uniform(1000000, 2000000), 2)
-        mxvalue = round(random.uniform(2000000, 3000000), 2)
-        avgvalue = round((mnvalue + mxvalue) / 2, 2)
+        mnvalue = round(random.uniform(101, 201), 0)
+        mxvalue = round(random.uniform(201, 301), 0)
+        avgvalue = round((mnvalue + mxvalue) / 2, 0)
 
         record = {
             "kelas_bangunan": kelas_bgn,

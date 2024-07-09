@@ -36,6 +36,11 @@ def load_znt_data(file_path, tahun_pajak):
     return filtered_znt_options
 
 def save_pbb_wajib_pajak(data, file_path):
+    # Ensure the directory exists
+    output_dir = os.path.dirname(file_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+    
     with open(file_path, 'w') as f:
         json.dump(data, f, indent=4)
 
@@ -127,7 +132,9 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
                         "op_luas_bumi": random.randint(1000, 3000),
                         "op_luas_bgn": random.randint(10, 100),
                         "op_status_nilai_bgn" : op_nilai_bgn,
-                        "op_nilai_bgn" : op_nilai_bgn_value
+                        "op_nilai_bgn" : op_nilai_bgn_value,
+                        "op_status_penetapan" : False,
+                        "op_tahun_penetapan_terakhir" : 0
                     },
                     "data_penetapan": {
                         "op_kelas_bumi": "",

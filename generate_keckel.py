@@ -9,7 +9,7 @@ def generate_kecamatan_kelurahan_data(kab_code, num_kecamatan, num_kelurahan_per
     kecamatan_data = {}
 
     for kecamatan_index in range(1, num_kecamatan + 1):
-        kecamatan_code = int(f"{int(kab_code)}{kecamatan_index:03d}")
+        kecamatan_code = int(f"{int(kab_code)}{kecamatan_index:03d}")  # Ensure kecamatan_code is an integer
         kecamatan_nama = fake.city()
 
         status_kec = random.choice([True, False])  # Generate status_kec here
@@ -23,7 +23,7 @@ def generate_kecamatan_kelurahan_data(kab_code, num_kecamatan, num_kelurahan_per
         }
 
         for kelurahan_index in range(1, num_kelurahan_per_kecamatan + 1):
-            kelurahan_code = int(f"{kecamatan_code}{kelurahan_index:03d}")
+            kelurahan_code = int(f"{kecamatan_code}{kelurahan_index:03d}")  # Ensure kelurahan_code is an integer
             kelurahan_nama = fake.street_name()
 
             # Set status_kel based on status_kec
