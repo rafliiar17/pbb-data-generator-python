@@ -67,7 +67,8 @@ def get_nir():
         luas_bgn = pbb_record['data_op']['op_luas_bgn']
         kelurahan_code = int(nop[:10])  # Extract kelurahan_code from nop
         op_znt = pbb_record['data_op']['op_znt']  # Get the op_znt from data_op
-        
+        # bgn_status_nilai = pbb_record['data_op']['op_status_nilai_bgn']
+
         # Check for matching znt_record in znt_data
         for znt_record in znt_data:
             if (znt_record['kelurahan_code'] == kelurahan_code and

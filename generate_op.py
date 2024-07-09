@@ -50,6 +50,7 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
     
     records = []
     data_wp_list = []  # List to store data_wp entries
+    used_nops = set()  # Set to store used NOPs
     generated_keys = set()  # Initialize as an empty set to store unique (nop, tahun_pajak) pairs
     max_attempts = 100  # Define max_attempts here
 
@@ -60,6 +61,11 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
                 # Randomly select a NOP from generated_nops
                 nop_entry = random.choice(generated_nops)
                 nop = nop_entry['nop']
+                
+                # Check if NOP has already been used
+                if nop in used_nops:
+                    attempts += 1
+                    continue
                 
                 # Extract components from NOP
                 kab_code = nop[:4]
@@ -132,15 +138,17 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
                         "op_luas_bumi": random.randint(1000, 3000),
                         "op_luas_bgn": random.randint(10, 100),
                         "op_status_nilai_bgn" : op_nilai_bgn,
-                        "op_nilai_bgn" : op_nilai_bgn_value,
-                        "op_status_penetapan" : False,
-                        "op_tahun_penetapan_terakhir" : 0
+                        "op_nilai_bgn" : op_nilai_bgn_value
                     },
                     "data_penetapan": {
+                        "op_status_penetapan" : False,
+                        "op_tahun_penetapan_terakhir" : 0,
+                        "status_penetapan" : False,
                         "op_kelas_bumi": "",
                         "op_kelas_bgn": "",
                         "op_njop_bumi": 0,
                         "op_njop_bgn": 0,
+                        "op_njop" : 0,
                         "op_njoptkp": 0,
                         "op_njkp_b4_pengenaan": 0,
                         "op_persen_pengenaan": 0,
@@ -204,9 +212,16 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
                     }
                 }
 
+                # Check if the record is unique
+                if (nop, tahun_pajak) in generated_keys:
+                    attempts += 1
+                    continue
+
                 # Append data_wp to data_wp_list
                 data_wp_list.append(record["data_wp"])
 
+                # Mark NOP as used
+                used_nops.add(nop)
                 generated_keys.add((nop, tahun_pajak))
                 records.append(record)
                 pbar.update(1)
