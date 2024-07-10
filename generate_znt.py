@@ -11,7 +11,7 @@ fake = Faker()
 OP_ZNT_OPTIONS = [chr(i) + chr(j) for i in range(65, 91) for j in range(65, 91)]  # AA to ZZ
 
 def load_kecamatan_kelurahan_data():
-    filename = 'GENERATED_DATA/kecamatan_kelurahan_data.json'  # Adjust path as necessary
+    filename = 'CONFIG_DATA/kecamatan_kelurahan_data.json'  # Adjust path as necessary
     with open(filename, 'r') as f:
         data = json.load(f)
     return data
@@ -53,7 +53,7 @@ def generate_znt_data(tahun_pajak_range, kecamatan_kelurahan_data):
     return znt_data
 
 def save_znt_data(znt_data):
-    output_dir = 'GENERATED_DATA'  # Adjust output directory as necessary
+    output_dir = 'CONFIG_DATA'  # Adjust output directory as necessary
     os.makedirs(output_dir, exist_ok=True)
     filename = os.path.join(output_dir, 'znt_data.json')
     with open(filename, 'w') as f:
@@ -73,4 +73,4 @@ if __name__ == "__main__":
 
     save_znt_data(znt_data)
 
-    print(f"Generated ZNT records for years {args.min_year}-{args.max_year} and saved to 'GENERATED_DATA/znt_data.json'.")
+    print(f"Generated ZNT records for years {args.min_year}-{args.max_year} and saved to 'CONFIG_DATA/znt_data.json'.")

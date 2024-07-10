@@ -45,7 +45,7 @@ def save_pbb_wajib_pajak(data, file_path):
         json.dump(data, f, indent=4)
 
 def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_options, op_nilai_bgn_options, tahun_pajak):
-    generated_nops = load_generated_nops('GENERATED_DATA/generated_nop.json')
+    generated_nops = load_generated_nops('DATA_OP/generated_nop.json')
     total_nops = len(generated_nops)
     
     records = []
@@ -232,7 +232,7 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
                 break  # Break out of records generation loop if max attempts reached
 
     # Save data_wp_list to a separate file
-    save_pbb_wajib_pajak(data_wp_list, f'DATA_SW/pbb_data_wp_{tahun_pajak}.json')
+    save_pbb_wajib_pajak(data_wp_list, f'GENERATED_DATA/pbb_data_wp_{tahun_pajak}.json')
 
     return records
 
@@ -257,16 +257,16 @@ if __name__ == "__main__":
     WP_STATUS_OPTIONS = ["Pemakai","Pemilik","Pengelola","Penyewa","Sengketa"]
     
     # Load ZNT options based on tahun_pajak
-    OP_ZNT_OPTIONS = load_znt_data('GENERATED_DATA/znt_data.json', args.tahun_pajak)
+    OP_ZNT_OPTIONS = load_znt_data('CONFIG_DATA/znt_data.json', args.tahun_pajak)
     OP_NILAI_BGN_OPTIONS = ["System", "Manual"]
 
     # Load generated NOPs to determine the number of records
-    generated_nops = load_generated_nops('GENERATED_DATA/generated_nop.json')
+    generated_nops = load_generated_nops('DATA_OP/generated_nop.json')
     num_records = len(generated_nops)
 
     start_time = time.time()
     generated_data = generate_data(num_records, WP_PEKERJAAN_OPTIONS, WP_STATUS_OPTIONS, OP_ZNT_OPTIONS, OP_NILAI_BGN_OPTIONS, args.tahun_pajak)
-    save_data(generated_data, "DATA_SW", f"pbb_data_{args.tahun_pajak}.json")
+    save_data(generated_data, "GENERATED_DATA", f"pbb_data_{args.tahun_pajak}.json")
     end_time = time.time()
 
     print(f"Data generation completed in {end_time - start_time:.2f} seconds")

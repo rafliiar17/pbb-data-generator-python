@@ -26,7 +26,7 @@ if __name__ == "__main__":
         f'python generate_kelas.py --min_year {min_year} --max_year {max_year}',
         f'python generate_nop.py',
         f'python generate_op.py --tahun_pajak {tahun_pajak}',
-        f'python generate_assesment.py --tahun_pajak {tahun_pajak}',
+        f'python process_assdet.py'
     ]
 
     # Execute each command sequentially with a progress bar

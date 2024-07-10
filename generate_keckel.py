@@ -66,7 +66,7 @@ if __name__ == "__main__":
     kecamatan_records = generate_kecamatan_kelurahan_data(kab_code, num_kecamatan, num_kelurahan_per_kecamatan)
 
     # Ensure the directory exists
-    output_dir = 'GENERATED_DATA'
+    output_dir = 'CONFIG_DATA'
     os.makedirs(output_dir, exist_ok=True)
 
     # Save kecamatan and kelurahan data to a single JSON file

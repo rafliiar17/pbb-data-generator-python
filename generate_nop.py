@@ -20,7 +20,7 @@ def calculate_max_nops(kecamatan_kelurahan_data):
     return max_nops
 
 # Function to generate NOP and write to file
-def generate_nop_and_write(kode_kab, count, kecamatan_kelurahan_data, kode_blok_start='001', no_urut_start='0001', output_dir='GENERATED_DATA'):
+def generate_nop_and_write(kode_kab, count, kecamatan_kelurahan_data, kode_blok_start='001', no_urut_start='0001', output_dir='DATA_OP'):
     os.makedirs(output_dir, exist_ok=True)
     generated_nops = set()
     file_path = os.path.join(output_dir, f"generated_nop.json")
@@ -99,7 +99,7 @@ def generate_nop(kode_kab, kecamatan_code, kelurahan_info, total_no_urut, curren
     return nop, next_no_urut
 
 if __name__ == "__main__":
-    kecamatan_kelurahan_file = 'GENERATED_DATA/kecamatan_kelurahan_data.json'
+    kecamatan_kelurahan_file = 'CONFIG_DATA/kecamatan_kelurahan_data.json'
     kecamatan_kelurahan_data = load_kecamatan_kelurahan_data(kecamatan_kelurahan_file)
     
     max_nops = calculate_max_nops(kecamatan_kelurahan_data)

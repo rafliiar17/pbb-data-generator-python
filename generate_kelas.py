@@ -65,7 +65,7 @@ if __name__ == "__main__":
     kelas_bgn_records = generate_kelas_bangunan_data(min_year, max_year)
 
     # Ensure the directory exists
-    output_dir = 'GENERATED_DATA'
+    output_dir = 'CONFIG_DATA'
     os.makedirs(output_dir, exist_ok=True)
 
     # Save to JSON files

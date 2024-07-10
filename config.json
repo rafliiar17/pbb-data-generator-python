@@ -1,13 +1,53 @@
-{   "AppName" : "PBB",
+{
+    "AppName": "PBB",
     "kab_code": "3204",
     "kab_name": "KAB. BANTENG",
     "kec_kel": {
-        "number_kecamatan": 1,
-        "number_kelurahan": 2
+        "number_kecamatan": 2,
+        "number_kelurahan": 3
     },
     "year": {
         "min_year": 2023,
         "max_year": 2024
     },
-    "tahun_pajak" : 2024
+    "tahun_pajak": 2024,
+    "persen_pengenaan": [
+        {
+            "tahun_pajak_awal": 1993,
+            "tahun_pajak_akhir": 2024,
+            "mnvalue": 0,
+            "mxvalue": 1000000,
+            "persentase": 0.100
+        },
+        {
+            "tahun_pajak_awal": 1993,
+            "tahun_pajak_akhir": 2024,
+            "mnvalue": 1000001,
+            "mxvalue": 2000000,
+            "persentase": 0.200
+        },
+        {
+            "tahun_pajak_awal": 1993,
+            "tahun_pajak_akhir": 2024,
+            "mnvalue": 2000001,
+            "mxvalue": 3000000,
+            "persentase": 0.300
+        },
+        {
+            "tahun_pajak_awal": 1993,
+            "tahun_pajak_akhir": 2024,
+            "mnvalue": 3000001,
+            "mxvalue": 4000000,
+            "persentase": 0.400
+        },
+        {
+            "tahun_pajak_awal": 1993,
+            "tahun_pajak_akhir": 2024,
+            "mnvalue": 4000001,
+            "mxvalue": 5000000,
+            "persentase": 0.500
+        }
+    ]
 }
+
+
