@@ -5,6 +5,12 @@ from faker import Faker
 
 fake = Faker()
 
+def load_config():
+    file_path = 'config.json'
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
+
 def generate_kecamatan_kelurahan_data(kab_code, num_kecamatan, num_kelurahan_per_kecamatan):
     kecamatan_data = {}
 
@@ -51,17 +57,15 @@ def save_data(data, filename):
         json.dump(data, f, indent=4)
 
 if __name__ == "__main__":
-    import argparse
+    config_data = load_config()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--kab_code', type=str, required=True, help='Prefix for kode kabupaten')
-    parser.add_argument('--num_kecamatan', type=int, required=True, help='Number of kecamatan to generate')
-    parser.add_argument('--num_kelurahan_per_kecamatan', type=int, required=True, help='Number of kelurahan per kecamatan to generate')
-    args = parser.parse_args()
+    kab_code = config_data.get('kab_code')
+    num_kecamatan = config_data.get('kec_kel', {}).get('number_kecamatan')
+    num_kelurahan_per_kecamatan = config_data.get('kec_kel', {}).get('number_kelurahan')
 
-    kab_code = args.kab_code
-    num_kecamatan = args.num_kecamatan
-    num_kelurahan_per_kecamatan = args.num_kelurahan_per_kecamatan
+    if not kab_code or not num_kecamatan or not num_kelurahan_per_kecamatan:
+        print("Error: 'kab_code', 'num_kecamatan', and 'num_kelurahan_per_kecamatan' must be defined in config.json")
+        exit(1)
 
     kecamatan_records = generate_kecamatan_kelurahan_data(kab_code, num_kecamatan, num_kelurahan_per_kecamatan)
 
@@ -73,4 +77,4 @@ if __name__ == "__main__":
     output_path = os.path.join(output_dir, 'kecamatan_kelurahan_data.json')
     save_data(kecamatan_records, output_path)
 
-    print(f"Generated and saved kecamatan and kelurahan records to '{output_path}'.")
+    print(f"Generated and saved {num_kecamatan} kecamatan and {num_kelurahan_per_kecamatan} kelurahan records for {kab_code}  to '{output_path}'.")

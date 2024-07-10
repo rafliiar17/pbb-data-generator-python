@@ -7,6 +7,12 @@ from faker import Faker
 
 fake = Faker()
 
+def load_config():
+    file_path = 'config.json'
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
+
 # Define options for znt_code
 OP_ZNT_OPTIONS = [chr(i) + chr(j) for i in range(65, 91) for j in range(65, 91)]  # AA to ZZ
 
@@ -14,6 +20,7 @@ def load_kecamatan_kelurahan_data():
     filename = 'CONFIG_DATA/kecamatan_kelurahan_data.json'  # Adjust path as necessary
     with open(filename, 'r') as f:
         data = json.load(f)
+    print(f"Loaded kecamatan_kelurahan_data from {filename}")
     return data
 
 def generate_znt_data(tahun_pajak_range, kecamatan_kelurahan_data):
@@ -48,7 +55,7 @@ def generate_znt_data(tahun_pajak_range, kecamatan_kelurahan_data):
                     znt_data.append(znt_entry)
 
                     # Update previous_nir_dict for the current combination
-                    previous_nir_dict[key] = previous_nir + 10  # Increment nir by 1000 for the next entry
+                    previous_nir_dict[key] = previous_nir + 10  # Increment nir by 10 for the next entry
 
     return znt_data
 
@@ -58,14 +65,18 @@ def save_znt_data(znt_data):
     filename = os.path.join(output_dir, 'znt_data.json')
     with open(filename, 'w') as f:
         json.dump(znt_data, f, indent=4)
+    print(f"Saved ZNT records to {filename} with {len(znt_data)} records")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--min_year', type=int, required=True, help='Minimum year')
-    parser.add_argument('--max_year', type=int, required=True, help='Maximum year')
-    args = parser.parse_args()
+    config_data = load_config()
+    min_year = config_data.get('year', {}).get('min_year')
+    max_year = config_data.get('year', {}).get('max_year')
 
-    tahun_pajak_range = (args.min_year, args.max_year)
+    if min_year is None or max_year is None:
+        print("Error: 'min_year' and 'max_year' must be defined in config.json")
+        exit(1)
+
+    tahun_pajak_range = (min_year, max_year)
 
     kecamatan_kelurahan_data = load_kecamatan_kelurahan_data()
 
@@ -73,4 +84,4 @@ if __name__ == "__main__":
 
     save_znt_data(znt_data)
 
-    print(f"Generated ZNT records for years {args.min_year}-{args.max_year} and saved to 'CONFIG_DATA/znt_data.json'.")
+    print(f"Generated ZNT records for years {min_year}-{max_year} and saved to 'CONFIG_DATA/znt_data.json'.")

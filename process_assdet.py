@@ -229,14 +229,14 @@ def main():
     kelas_bgn_data = load_kelas_bgn_data()
     
     if znt_data and kelas_bumi_data and kelas_bgn_data:
-        print("Loaded ZNT, Kelas Bumi, and Kelas Bangunan data.")
+        print(f"Loaded ZNT, Kelas Bumi, and Kelas Bangunan data for {tahun_pajak}")
     else:
         print("Error loading ZNT, Kelas Bumi, or Kelas Bangunan data. Aborting process.")
         return
     
     assessment_results = process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahun_pajak)
     if assessment_results:
-        print(f"Generated assessment results for {len(assessment_results)} PBB records.")
+        print(f"Generated assessment results for {len(assessment_results)} PBB records for {tahun_pajak}")
     else:
         print("No assessment results generated. Aborting process.")
         return

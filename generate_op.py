@@ -12,7 +12,7 @@ def load_generated_nops(file_path):
     try:
         with open(file_path, 'r') as f:
             data = json.load(f)
-        print("generated_nop file is valid.")
+        print("Generate Nop file is valid.")
     except json.JSONDecodeError as e:
         print(f"JSONDecodeError: {e}")
         return []
@@ -54,7 +54,7 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
     generated_keys = set()  # Initialize as an empty set to store unique (nop, tahun_pajak) pairs
     max_attempts = 100  # Define max_attempts here
 
-    with tqdm(total=min(total_nops, num_records), desc="Generating Data") as pbar:
+    with tqdm(total=min(total_nops, num_records), desc=f"Generating Data OP : {tahun_pajak}") as pbar:
         while len(records) < total_nops and len(records) < num_records:
             attempts = 0
             while attempts < max_attempts:

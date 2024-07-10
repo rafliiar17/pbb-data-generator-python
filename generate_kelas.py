@@ -2,6 +2,13 @@ import json
 import random
 import os
 
+
+def load_config():
+    file_path = 'config.json'
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
+
 def generate_kelas_bumi_data(min_year, max_year):
     kelas_bumi_data = []
 
@@ -10,8 +17,8 @@ def generate_kelas_bumi_data(min_year, max_year):
 
     for i in range(num_records):
         kelas_bumi = f"A{i + 1}"
-        mnvalue = round(random.uniform(100, 200), 0)
-        mxvalue = round(random.uniform(201, 300), 0)
+        mnvalue = 100 + (i * 50)
+        mxvalue = mnvalue + 49
         avgvalue = round((mnvalue + mxvalue) / 2, 0)
 
         record = {
@@ -34,8 +41,9 @@ def generate_kelas_bangunan_data(min_year, max_year):
 
     for i in range(num_records):
         kelas_bgn = f"A{i + 1}"
-        mnvalue = round(random.uniform(101, 201), 0)
-        mxvalue = round(random.uniform(201, 301), 0)
+        mnvalue = 100 + (i * 50)
+        mxvalue = mnvalue + 49
+        avgvalue = round((mnvalue + mxvalue) / 2, 0)
         avgvalue = round((mnvalue + mxvalue) / 2, 0)
 
         record = {
@@ -51,15 +59,10 @@ def generate_kelas_bangunan_data(min_year, max_year):
     return kelas_bgn_data
 
 if __name__ == "__main__":
-    import argparse
+    config_data = load_config()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--min_year', type=int, required=True, help='Minimum year for data generation')
-    parser.add_argument('--max_year', type=int, required=True, help='Maximum year for data generation')
-    args = parser.parse_args()
-
-    min_year = args.min_year
-    max_year = args.max_year
+    min_year = config_data.get('year', {}).get('min_year')
+    max_year = config_data.get('year', {}).get('max_year')
 
     kelas_bumi_records = generate_kelas_bumi_data(min_year, max_year)
     kelas_bgn_records = generate_kelas_bangunan_data(min_year, max_year)
