@@ -8,15 +8,27 @@ from tqdm import tqdm
 
 fake = Faker('id_ID')
 
+def load_config():
+    file_path = 'config.json'
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
+
 def load_generated_nops(file_path):
     try:
         with open(file_path, 'r') as f:
-            data = json.load(f)
-        print("Generate Nop file is valid.")
+            data = json.load(f)  # Load the JSON to check validity
+        print("NOP JSON file is valid.")
+        return data  # Return the loaded data instead of an empty list
     except json.JSONDecodeError as e:
         print(f"JSONDecodeError: {e}")
         return []
-    return data
+    except FileNotFoundError as e:
+        print(f"FileNotFoundError: {e}")
+        return []
+    except Exception as e:
+        print(f"Error: {e}")
+        return []
 
 def load_znt_data(file_path, tahun_pajak):
     try:
@@ -44,8 +56,7 @@ def save_pbb_wajib_pajak(data, file_path):
     with open(file_path, 'w') as f:
         json.dump(data, f, indent=4)
 
-def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_options, op_nilai_bgn_options, tahun_pajak):
-    generated_nops = load_generated_nops('DATA_OP/generated_nop.json')
+def generate_data(generated_nops, num_records, wp_pekerjaan_options, wp_status_options, op_znt_options, op_nilai_bgn_options, tahun_pajak):
     total_nops = len(generated_nops)
     
     records = []
@@ -202,71 +213,72 @@ def generate_data(num_records, wp_pekerjaan_options, wp_status_options, op_znt_o
                         "payment_amount": 0,
                         "payment_amount_ded": 0,
                         "payment_penalty": 0,
-                        "payment_penalty_ded": 0,
-                        "payment_total": 0,
-                        "user_payment": None, ## if payment_flag_status = 1
-                        "installment_flag": 0,
-                        "booking_expired": {
-                            "$date": None
-                        }
+                        "payment_bill": 0
                     }
                 }
-
-                # Check if the record is unique
-                if (nop, tahun_pajak) in generated_keys:
+                
+                record_key = (nop, tahun_pajak)  # Create a unique key for the record
+                
+                if record_key not in generated_keys:
+                    generated_keys.add(record_key)
+                    records.append(record)
+                    data_wp_list.append(record["data_wp"])
+                    used_nops.add(nop)  # Mark NOP as used
+                    pbar.update(1)
+                    break
+                else:
                     attempts += 1
-                    continue
 
-                # Append data_wp to data_wp_list
-                data_wp_list.append(record["data_wp"])
+    return records, data_wp_list
 
-                # Mark NOP as used
-                used_nops.add(nop)
-                generated_keys.add((nop, tahun_pajak))
-                records.append(record)
-                pbar.update(1)
-                break  # Break out of attempts loop once record is generated
-
-            if attempts == max_attempts:
-                print("Max attempts reached, skipping record generation.")
-                break  # Break out of records generation loop if max attempts reached
-
-    # Save data_wp_list to a separate file
-    save_pbb_wajib_pajak(data_wp_list, f'GENERATED_DATA/pbb_data_wp_{tahun_pajak}.json')
-
-    return records
-
-# Function to save data to JSON file
-def save_data(data, output_dir, filename):
-    os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, filename)
-    with open(output_path, 'w') as f:
-        json.dump(data, f, indent=4)
-
-# Main execution
 if __name__ == "__main__":
-    import argparse
-    import time
-
-    parser = argparse.ArgumentParser(description="Generate PBB data.")
-    parser.add_argument("--tahun_pajak", type=int, required=True, help="Tahun Pajak")
-
-    args = parser.parse_args()
-
-    WP_PEKERJAAN_OPTIONS = ["PNS", "Swasta", "Wiraswasta", "Lainnya"]
-    WP_STATUS_OPTIONS = ["Pemakai","Pemilik","Pengelola","Penyewa","Sengketa"]
+    config = load_config()
+    
+    # Provide default values if keys are missing
+    wp_pekerjaan_options = config.get('wp_pekerjaan_options', ["PNS", "Swasta", "Wiraswasta", "Lainnya"])
+    wp_status_options = config.get('wp_status_options', ["Pemakai", "Pemilik", "Pengelola", "Penyewa", "Sengketa"])
+    tahun_pajak = config.get('tahun_pajak', datetime.now().year)
+    
+    # Load generated NOPs once here
+    generated_nops_file_path = 'GENERATED_DATA/generated_nop.json'
+    if not os.path.exists(generated_nops_file_path):
+        print(f"File not found: {generated_nops_file_path}")
+        exit()
+    
+    generated_nops = load_generated_nops(generated_nops_file_path)
+    
+    if not generated_nops:
+        print("No valid NOP data found. Exiting.")
+        exit()
+    
+    # Default to the length of generated_nops if 'num_records' is not found
+    num_records = config.get('num_records', len(generated_nops))
+    
+    op_znt_options = load_znt_data('CONFIG_DATA/znt_data.json', tahun_pajak)
+    op_nilai_bgn_options = config['op_nilai_bgn_options']
+    
+    # Print the count of generated NOPs
+    print(f"Number of generated NOPs: {len(generated_nops)}")
+    
+    znt_data_file_path = 'CONFIG_DATA/znt_data.json'
     
     # Load ZNT options based on tahun_pajak
-    OP_ZNT_OPTIONS = load_znt_data('CONFIG_DATA/znt_data.json', args.tahun_pajak)
+    OP_ZNT_OPTIONS = load_znt_data('CONFIG_DATA/znt_data.json', tahun_pajak)
     OP_NILAI_BGN_OPTIONS = ["System", "Manual"]
 
-    # Load generated NOPs to determine the number of records
-    generated_nops = load_generated_nops('DATA_OP/generated_nop.json')
-    num_records = len(generated_nops)
 
-    start_time = time.time()
-    generated_data = generate_data(num_records, WP_PEKERJAAN_OPTIONS, WP_STATUS_OPTIONS, OP_ZNT_OPTIONS, OP_NILAI_BGN_OPTIONS, args.tahun_pajak)
-    save_data(generated_data, "GENERATED_DATA", f"pbb_data_{args.tahun_pajak}.json")
-    end_time = time.time()
-
-    print(f"Data generation completed in {end_time - start_time:.2f} seconds")
+    pbb_data_records, data_wp_list = generate_data(
+        generated_nops,
+        num_records,
+        wp_pekerjaan_options,
+        wp_status_options,
+        op_znt_options,
+        op_nilai_bgn_options,
+        tahun_pajak
+    )
+    
+    output_dir = 'DATA_OP'
+    output_file_path = os.path.join(output_dir, f'pbb_data_{tahun_pajak}.json')
+    save_pbb_wajib_pajak(pbb_data_records, output_file_path)
+    
+    print(f"Generated {len(pbb_data_records)} records and saved to {output_file_path}.")

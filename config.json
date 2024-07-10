@@ -3,11 +3,11 @@
     "kab_code": "3204",
     "kab_name": "KAB. BANTENG",
     "kec_kel": {
-        "number_kecamatan": 1,
-        "number_kelurahan": 1
+        "number_kecamatan": 5,
+        "number_kelurahan": 10
     },
     "year": {
-        "min_year": 2023,
+        "min_year": 1993,
         "max_year": 2024
     },
     "tahun_pajak": 2024,
@@ -47,7 +47,10 @@
             "mxvalue": 5000000,
             "persentase": 0.500
         }
-    ]
+    ],
+        "wp_pekerjaan_options": ["PNS", "Swasta", "Wiraswasta", "Lainnya"],
+        "wp_status_options": ["Pemakai", "Pemilik", "Pengelola", "Penyewa", "Sengketa"],
+        "op_nilai_bgn_options": ["System", "Manual"]
 }
 
 

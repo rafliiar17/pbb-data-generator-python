@@ -21,11 +21,11 @@ if __name__ == "__main__":
 
     # Define the commands to be executed with the tax year passed as argument
     commands = [
-        f'python generate_keckel.py --kab_code {kab_code} --num_kecamatan {num_kecamatan} --num_kelurahan_per_kecamatan {num_kelurahan_per_kecamatan}',
-        f'python generate_znt.py --min_year {min_year} --max_year {max_year}',
-        f'python generate_kelas.py --min_year {min_year} --max_year {max_year}',
+        f'python generate_keckel.py',
+        f'python generate_znt.py',
+        f'python generate_kelas.py',
         f'python generate_nop.py',
-        f'python generate_op.py --tahun_pajak {tahun_pajak}',
+        f'python generate_op.py',
         f'python process_assdet.py'
     ]
 
