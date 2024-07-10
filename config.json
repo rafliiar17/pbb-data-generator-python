@@ -11,47 +11,96 @@
         "max_year": 2024
     },
     "tahun_pajak": 2024,
+    "wp_pekerjaan_options": ["PNS", "Swasta", "Wiraswasta", "Lainnya"],
+        "wp_status_options": ["Pemakai", "Pemilik", "Pengelola", "Penyewa", "Sengketa"],
+        "op_nilai_bgn_options": ["System", "Manual"],
+        "auto_assdet" : false,
+
+        "debug_max_nop" : {
+            "status" : false,
+        "maxnop" : 100
+    },
     "persen_pengenaan": [
         {
             "tahun_pajak_awal": 1993,
             "tahun_pajak_akhir": 2024,
             "mnvalue": 0,
             "mxvalue": 1000000,
-            "persentase": 0.100
+            "persentase": 50
         },
         {
             "tahun_pajak_awal": 1993,
             "tahun_pajak_akhir": 2024,
             "mnvalue": 1000001,
             "mxvalue": 2000000,
-            "persentase": 0.200
+            "persentase": 60
         },
         {
             "tahun_pajak_awal": 1993,
             "tahun_pajak_akhir": 2024,
             "mnvalue": 2000001,
             "mxvalue": 3000000,
-            "persentase": 0.300
+            "persentase": 70
         },
         {
             "tahun_pajak_awal": 1993,
             "tahun_pajak_akhir": 2024,
             "mnvalue": 3000001,
             "mxvalue": 4000000,
-            "persentase": 0.400
+            "persentase": 80
         },
         {
             "tahun_pajak_awal": 1993,
             "tahun_pajak_akhir": 2024,
             "mnvalue": 4000001,
             "mxvalue": 5000000,
-            "persentase": 0.500
+            "persentase": 90
         }
     ],
-        "wp_pekerjaan_options": ["PNS", "Swasta", "Wiraswasta", "Lainnya"],
-        "wp_status_options": ["Pemakai", "Pemilik", "Pengelola", "Penyewa", "Sengketa"],
-        "op_nilai_bgn_options": ["System", "Manual"],
-        "auto_assdet" : false
+        "tarif_op" : [
+            {
+                "tahun_pajak_awal" : 2023,
+                "tahun_pajak_akhir" : 2024,
+                "mnvalue" : 0,
+                "mxvalue" : 999999,
+                "persentase" : 0.100
+            },
+            {
+            "tahun_pajak_awal" : 2023,
+            "tahun_pajak_akhir" : 2024,
+            "mnvalue" : 1000000,
+            "mxvalue" : 2000000,
+            "persentase" : 0.100
+        },
+        {
+            "tahun_pajak_awal" : 2023,
+            "tahun_pajak_akhir" : 2024,
+            "mnvalue" : 2000000,
+            "mxvalue" : 3000000,
+            "persentase" : 0.200
+        },
+        {
+            "tahun_pajak_awal" : 2023,
+            "tahun_pajak_akhir" : 2024,
+            "mnvalue" : 3000000,
+            "mxvalue" : 4000000,
+            "persentase" : 0.300
+        },
+        {
+            "tahun_pajak_awal" : 2023,
+            "tahun_pajak_akhir" : 2024,
+            "mnvalue" : 4000000,
+            "mxvalue" : 5000000,
+            "persentase" : 0.400
+        },
+        {
+            "tahun_pajak_awal" : 2023,
+            "tahun_pajak_akhir" : 2024,
+            "mnvalue" : 5000000,
+            "mxvalue" : 9999999999999,
+            "persentase" : 0.500
+        }
+    ]
 }
 
 
