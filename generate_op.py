@@ -12,7 +12,7 @@ def load_generated_nops(file_path):
     try:
         with open(file_path, 'r') as f:
             data = json.load(f)
-        print("JSON file is valid.")
+        print("generated_nop file is valid.")
     except json.JSONDecodeError as e:
         print(f"JSONDecodeError: {e}")
         return []

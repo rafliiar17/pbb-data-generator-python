@@ -1,6 +1,7 @@
 import json
-from datetime import datetime
 import os
+import time
+from datetime import datetime
 from tqdm import tqdm  # Import tqdm for progress bar
 import shutil  # Import shutil for file copying
 
@@ -43,51 +44,37 @@ def load_kelas_bgn_data():
 def generate_filename():
     now = datetime.now()
     timestamp = now.strftime("%Y%m%d_%H%M%S")
-    return f"DATA_PENILAIAN/assessment_{timestamp}.json"
+    directory = "DATA_PENILAIAN"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    return f"{directory}/assessment_{timestamp}.json"
 
 # Function to get nir based on kelurahan_code, znt_code, and znt_year
-def process_assessment():
-    # Load config data
-    config_data = load_config()
-    tahun_pajak = config_data.get('tahun_pajak')
-    
-    # Load data
-    pbb_data = load_pbb_data(tahun_pajak)
-    znt_data = load_znt_data()
-    kelas_bumi_data = load_kelas_bumi_data()
-    kelas_bgn_data = load_kelas_bgn_data()
-    
-    nir_results = []  # List to store results
-    
-    # Initialize tqdm for progress bar
+def process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahun_pajak):
+    nir_results = []
     pbar = tqdm(total=len(pbb_data), desc='Processing Assessment PBB Data', position=0, leave=True)
     
-    # Iterate through pbb_data
     for pbb_record in pbb_data:
-        nop = pbb_record['nop']  # Properly assign the nop variable
-        luas_bumi = pbb_record['data_op']['op_luas_bumi']
-        luas_bgn = pbb_record['data_op']['op_luas_bgn']
-        kelurahan_code = int(nop[:10])  # Extract kelurahan_code from nop
-        op_znt = pbb_record['data_op']['op_znt']  # Get the op_znt from data_op
+        nop = pbb_record['nop']
+        luas_bumi = pbb_record['data_op'].get('op_luas_bumi', 0)
+        luas_bgn = pbb_record['data_op'].get('op_luas_bgn', 0)
+        kelurahan_code = int(nop[:10])
+        op_znt = pbb_record['data_op'].get('op_znt', '')
 
-        # Check for matching znt_record in znt_data
         for znt_record in znt_data:
             if (znt_record['kelurahan_code'] == kelurahan_code and
                 znt_record['znt_code'] == op_znt and
                 znt_record['znt_year'] == tahun_pajak):
                 nir = znt_record['nir']
                 
-                # Find the matching kelas_bumi record
                 for kelas_bumi_record in kelas_bumi_data:
                     if (kelas_bumi_record['fyear'] <= tahun_pajak <= kelas_bumi_record['lyear'] and
                         kelas_bumi_record['mnvalue'] <= nir <= kelas_bumi_record['mxvalue']):
                         
-                        # Find the matching kelas_bgn record
                         for kelas_bgn_record in kelas_bgn_data:
                             if (kelas_bgn_record['fyear'] <= tahun_pajak <= kelas_bgn_record['lyear'] and
                                 kelas_bgn_record['mnvalue'] <= nir <= kelas_bgn_record['mxvalue']):
                                 
-                                # Prepare result dictionary
                                 result = {
                                     "nop": nop,
                                     "kelurahan_code": kelurahan_code,
@@ -107,23 +94,13 @@ def process_assessment():
                                     "user_assessment": "admin"
                                 }
                                 nir_results.append(result)
-                                break  # Exit kelas_bgn_record loop after finding a match
-                        break  # Exit kelas_bumi_record loop after finding a match
+                                break  # Exit the loop once a match is found
+                        break  # Exit the loop once a match is found
+                break  # Exit the loop once a match is found
         
-        pbar.update(1)  # Update progress bar
+        pbar.update(1)
     
-    pbar.close()  # Close progress bar
-    
-    # Generate filename based on current datetime
-    filename = generate_filename()
-    
-    # Ensure the directory exists
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
-    
-    # Write results to JSON file
-    with open(filename, 'w') as file:
-        json.dump(nir_results, file, indent=4)
-    
+    pbar.close()
     return nir_results
 
 # Function to load and validate the latest assessment data
@@ -220,52 +197,75 @@ def update_pbb_data(pbb_data, assessment_data, config_data):
     
     return pbb_data
 
-# Main script
-if __name__ == '__main__':
-    # Load config data
+# Function to backup PBB data
+def backup_pbb_data(pbb_data, backup_folder, config_data):
+    source_file_path = f'GENERATED_DATA/pbb_data_{config_data["tahun_pajak"]}.json'
+    backup_path = os.path.join(backup_folder, os.path.basename(source_file_path))
+    
+    try:
+        shutil.copyfile(source_file_path, backup_path)
+        print(f"Successfully backed up PBB data to {backup_path}")
+    except Exception as e:
+        print(f"Error backing up PBB data: {e}")
+
+# Main function to execute the assessment process
+def main():
     config_data = load_config()
-    tahun_pajak = config_data.get('tahun_pajak')
     
-    # Validate config data
-    if not validate_config(config_data):
-        print("Invalid config data")
-        exit(1)
-    
-    # Backup existing PBB data
-    pbb_file_path = f'GENERATED_DATA/pbb_data_{tahun_pajak}.json'
-    backup_file_path = f'GENERATED_DATA/pbb_data_{tahun_pajak}_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
-    shutil.copy(pbb_file_path, backup_file_path)
-    print(f"Backup of PBB data created at {backup_file_path}")
-    
-    # Load PBB data
-    pbb_data = load_pbb_data(tahun_pajak)
-    
-    # Validate PBB data
-    if not validate_pbb_data(pbb_data):
-        print("Invalid PBB data")
-        exit(1)
-    
-    # Process assessment
-    assessment_data = process_assessment()
-    
-    # Validate assessment data
-    if not validate_assessment_data(assessment_data):
-        print("Invalid assessment data")
-        exit(1)
-    
-    # Update PBB data based on assessment data
-    updated_pbb_data = update_pbb_data(pbb_data, assessment_data, config_data)
-    
-    # Save updated PBB data to JSON file
-    with open(pbb_file_path, 'w') as file:
-        json.dump(updated_pbb_data, file, indent=4)
-    
-    print(f"Updated PBB data saved to {pbb_file_path}")
-    
-    # Load and validate the latest assessment data
-    latest_assessment_data = load_and_validate_latest_assessment()
-    
-    if latest_assessment_data:
-        print("Successfully loaded and validated the latest assessment data")
+    if validate_config(config_data):
+        tahun_pajak = config_data['tahun_pajak']
+        print(f"Loaded configuration for tahun_pajak: {tahun_pajak}")
     else:
-        print("Failed to load or validate the latest assessment data")
+        print("Invalid or missing configuration data.")
+        return
+    
+    pbb_data = load_pbb_data(tahun_pajak)
+    if not validate_pbb_data(pbb_data):
+        print("Invalid PBB data. Aborting process.")
+        return
+    
+    znt_data = load_znt_data()
+    kelas_bumi_data = load_kelas_bumi_data()
+    kelas_bgn_data = load_kelas_bgn_data()
+    
+    if znt_data and kelas_bumi_data and kelas_bgn_data:
+        print("Loaded ZNT, Kelas Bumi, and Kelas Bangunan data.")
+    else:
+        print("Error loading ZNT, Kelas Bumi, or Kelas Bangunan data. Aborting process.")
+        return
+    
+    assessment_results = process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahun_pajak)
+    if assessment_results:
+        print(f"Generated assessment results for {len(assessment_results)} PBB records.")
+    else:
+        print("No assessment results generated. Aborting process.")
+        return
+    
+    filename = generate_filename()
+    with open(filename, 'w') as file:
+        json.dump(assessment_results, file, indent=4)
+        print(f"Assessment results saved to {filename}")
+    
+    backup_folder = 'BACKUP_DATA'
+    if not os.path.exists(backup_folder):
+        os.makedirs(backup_folder)
+    backup_pbb_data(pbb_data, backup_folder, config_data)
+    
+    latest_assessment_data = load_and_validate_latest_assessment()
+    if latest_assessment_data:
+        updated_pbb_data = update_pbb_data(pbb_data, latest_assessment_data, config_data)
+        updated_directory = 'DATA_PENETAPAN'
+        if not os.path.exists(updated_directory):
+            os.makedirs(updated_directory)
+        updated_filename = f'{updated_directory}/pbb_data_{config_data["tahun_pajak"]}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        with open(updated_filename, 'w') as file:
+            json.dump(updated_pbb_data, file, indent=4)
+            print(f"Updated PBB data saved to {updated_filename}")
+    else:
+        print("Failed to update PBB data. No valid assessment data found.")
+    
+    print("Assessment process completed.")
+
+# Execute the main function
+if __name__ == "__main__":
+    main()
