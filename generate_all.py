@@ -1,34 +1,42 @@
-import json
 import subprocess
+import json
 from tqdm import tqdm
 
-def load_config(file_path):
-    with open(file_path, 'r') as f:
-        config = json.load(f)
-    return config
+def load_config():
+    file_path = 'config.json'
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
 
-if __name__ == "__main__":
-    # Load configuration from config.json
-    config = load_config('config.json')
+config = load_config()
+tahun = config.get('tahun_pajak')
+kode = config.get('kab_code')
+nama = config.get('kab_name')
 
-    # Extract values from config
-    kab_code = config["kab_code"]
-    num_kecamatan = config["kec_kel"]["number_kecamatan"]
-    num_kelurahan_per_kecamatan = config["kec_kel"]["number_kelurahan"]
-    min_year = config["year"]["min_year"]
-    max_year = config["year"]["max_year"]
-    tahun_pajak = config["tahun_pajak"]
+# Define the commands to be executed with the tax year passed as argument
+initial_commands = [ 
+    'python generate_keckel.py',
+    'python generate_znt.py',
+    'python generate_kelas.py',
+    'python generate_nop.py',
+    'python generate_op.py'
+]
 
-    # Define the commands to be executed with the tax year passed as argument
-    commands = [
-        f'python generate_keckel.py',
-        f'python generate_znt.py',
-        f'python generate_kelas.py',
-        f'python generate_nop.py',
-        f'python generate_op.py',
-        f'python process_assdet.py'
-    ]
+# Execute initial commands sequentially with a progress bar
+for command in tqdm(initial_commands, desc="Executing initial commands", unit="command"):
+    subprocess.run(command, shell=True)
+    print()  # Add a newline after each command execution
 
-    # Execute each command sequentially with a progress bar
-    for command in tqdm(commands, desc="Executing commands", unit="command"):
-        subprocess.run(command, shell=True)
+# Check if auto_assdet is false and prompt for confirmation
+if not config.get('auto_assdet', True):
+    confirm = input(f"Do you want to execute Assesment and Determination for {kode} : {nama} year {tahun} (yes/no): ").strip().lower()
+    if confirm == 'yes':
+        subprocess.run('python processing_assesment.py', shell=True)
+        print()  # Add a newline after the command execution
+        subprocess.run('python processing_determination.py', shell=True)
+        print()  # Add a newline after the command execution
+else:
+    subprocess.run('python processing_assesment.py', shell=True)
+    print()  # Add a newline after the command execution
+    subprocess.run('python processing_determination.py', shell=True)
+    print()  # Add a newline after the command execution

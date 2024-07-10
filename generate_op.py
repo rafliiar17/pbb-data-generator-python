@@ -233,7 +233,8 @@ def generate_data(generated_nops, num_records, wp_pekerjaan_options, wp_status_o
 
 if __name__ == "__main__":
     config = load_config()
-    
+    kab_name = config.get('kab_name')
+    kode_kab = config.get('kab_code')
     # Provide default values if keys are missing
     wp_pekerjaan_options = config.get('wp_pekerjaan_options', ["PNS", "Swasta", "Wiraswasta", "Lainnya"])
     wp_status_options = config.get('wp_status_options', ["Pemakai", "Pemilik", "Pengelola", "Penyewa", "Sengketa"])
@@ -258,7 +259,7 @@ if __name__ == "__main__":
     op_nilai_bgn_options = config['op_nilai_bgn_options']
     
     # Print the count of generated NOPs
-    print(f"Number of generated NOPs: {len(generated_nops)}")
+    print(f"Number of generated NOP on {kode_kab} - {kab_name} : {len(generated_nops)}")
     
     znt_data_file_path = 'CONFIG_DATA/znt_data.json'
     

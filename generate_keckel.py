@@ -60,6 +60,7 @@ if __name__ == "__main__":
     config_data = load_config()
 
     kab_code = config_data.get('kab_code')
+    kab_name = config_data.get('kab_name')
     num_kecamatan = config_data.get('kec_kel', {}).get('number_kecamatan')
     num_kelurahan_per_kecamatan = config_data.get('kec_kel', {}).get('number_kelurahan')
 
@@ -77,4 +78,4 @@ if __name__ == "__main__":
     output_path = os.path.join(output_dir, 'kecamatan_kelurahan_data.json')
     save_data(kecamatan_records, output_path)
 
-    print(f"Generated and saved {num_kecamatan} kecamatan and {num_kelurahan_per_kecamatan} kelurahan records for {kab_code}  to '{output_path}'.")
+    print(f"Generated and saved {num_kecamatan} kecamatan and {num_kelurahan_per_kecamatan} kelurahan records for {kab_code} - {kab_name} to '{output_path}'.")

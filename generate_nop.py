@@ -3,6 +3,14 @@ import random
 import json
 from tqdm import tqdm
 
+def load_config():
+    file_path = 'config.json'
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
+
+config = load_config()
+kab_name = config.get('kab_name')
 # Function to load kecamatan_kelurahan data from JSON file
 def load_kecamatan_kelurahan_data(file_path):
     with open(file_path, 'r') as file:
@@ -34,7 +42,7 @@ def generate_nop_and_write(kode_kab, count, kecamatan_kelurahan_data, kode_blok_
         
         nop_data_list = []  # List to collect NOP data
         
-        with tqdm(total=count, desc="Generating NOPs") as pbar:
+        with tqdm(total=count, desc="Generating NOP " + str(kode_kab) + " " + str(kab_name)) as pbar:
             while written_count < count:
                 # Iterate through each kelurahan
                 for kecamatan_code, kecamatan_info in kecamatan_kelurahan_data.items():
@@ -103,11 +111,11 @@ if __name__ == "__main__":
     kecamatan_kelurahan_data = load_kecamatan_kelurahan_data(kecamatan_kelurahan_file)
     
     max_nops = calculate_max_nops(kecamatan_kelurahan_data)
-    print(f"Maximum possible NOPs that can be generated: {max_nops}")
+    print(f"Maximum possible NOP that can be generated: {max_nops}")
     
     random_kecamatan_code = random.choice(list(kecamatan_kelurahan_data.keys()))
     kode_kab_input = str(random_kecamatan_code)[:4]
-    print(f"Generated kode_kab: {kode_kab_input}")
+    print(f"Generated kode_kab: {kode_kab_input} - {kab_name}")
     
     count = max_nops
     kode_blok_start = '001'

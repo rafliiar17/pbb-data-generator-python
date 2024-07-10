@@ -65,12 +65,14 @@ def save_znt_data(znt_data):
     filename = os.path.join(output_dir, 'znt_data.json')
     with open(filename, 'w') as f:
         json.dump(znt_data, f, indent=4)
-    print(f"Saved ZNT records to {filename} with {len(znt_data)} records")
+    print(f"Saved ZNT records for {kode_kab} - {kab_name} to {filename} with {len(znt_data)} records")
 
 if __name__ == "__main__":
     config_data = load_config()
     min_year = config_data.get('year', {}).get('min_year')
     max_year = config_data.get('year', {}).get('max_year')
+    kode_kab = config_data.get('kab_code')
+    kab_name = config_data.get('kab_name')
 
     if min_year is None or max_year is None:
         print("Error: 'min_year' and 'max_year' must be defined in config.json")
