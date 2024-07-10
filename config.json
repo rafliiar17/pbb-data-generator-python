@@ -18,7 +18,7 @@
 
         "debug_max_nop" : {
             "status" : true,
-        "maxnop" : 100
+        "maxnop" : 10000
     },
     "persen_pengenaan": [
         {
@@ -100,6 +100,33 @@
             "mxvalue" : 9999999999999,
             "persentase" : 0.500
         }
+    ],
+        "jatuh_tempo" : [
+            {
+                "mnvalue" : 0,
+                "mxvalue" : 99999999999999,
+                "tanggal_awal" : "2024-01-01",
+                "tanggal_akhir" : "2024-05-31",
+                "jatuh_tempo" : "2024-05-31"
+            },
+            {
+                "mnvalue" : 0,
+                "mxvalue" : 99999999999999,
+                "tanggal_awal" : "2024-06-01",
+                "tanggal_akhir" : "2024-12-31",
+                "jatuh_tempo" : "2024-12-31"
+            }
+        ],
+        "bank_code" : 
+            [{"code" : "00001", "name" : "BANK BCA"},
+            {"code" : "00002", "name" : "BANK BNI"},
+            {"code" : "00003", "name" : "BANK BRI"},
+            {"code" : "00004", "name" : "BANK BCA"}],
+        "merchant_code" : 
+            [{"code" : "001", "name" : "Atm"},
+            {"code" : "002", "name" : "Teller"},
+            {"code" : "003", "name" : "Mobile Banking"},
+            {"code" : "004", "name" : "Giro"}
     ]
 }
 

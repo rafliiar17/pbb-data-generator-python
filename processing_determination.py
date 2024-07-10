@@ -132,9 +132,10 @@ def validate_assessment_data(data):
         return False
 
 # Function to update PBB data based on assessment data
-def update_pbb_data(pbb_data, assessment_data, config_data, kab_code, kab_name, persen_pengenaan_data, tarif_op_data):
+def update_pbb_data(pbb_data, assessment_data, config_data, kab_code, kab_name, persen_pengenaan_data, tarif_op_data, jatuh_tempo_data):
     op_tahun_penetapan_terakhir = config_data.get('tahun_pajak')
     time_penetapan = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    tanggal_penetapan = datetime.now().strftime("%Y-%m-%d")
     
     for assessment_record in tqdm(assessment_data, desc="Processing Determination Data PBB from " + str(kab_code) + " - " + str(kab_name) + " : "):
         nop = assessment_record.get('nop')
@@ -157,6 +158,9 @@ def update_pbb_data(pbb_data, assessment_data, config_data, kab_code, kab_name, 
                 matching_record['data_penetapan']['sebelum_stimulus'] = round(get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data) * (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100))), 0)
                 matching_record['data_penetapan']['ketetapan_bayar'] = round(get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data) * (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100))), 0) ## ini klo ada stimulus harus dibikin lagi
                 matching_record['data_penetapan']['tanggal_penetapan'] = time_penetapan
+                matching_record['data_penetapan']['user_penetapan'] = "admin"
+                matching_record['data_penetapan']['tanggal_terbit'] = tanggal_penetapan
+                matching_record['data_penetapan']['jatuh_tempo'] = get_jatuh_tempo(matching_record['data_penetapan']['tanggal_penetapan'], matching_record['data_penetapan']['ketetapan_bayar'], jatuh_tempo_data)
             else:
                 matching_record['data_penetapan'] = {
                     "op_kelas_bumi": assessment_record.get('kelas_bumi'),
@@ -172,7 +176,9 @@ def update_pbb_data(pbb_data, assessment_data, config_data, kab_code, kab_name, 
                     "op_tarif": get_tarif_op(assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'], op_tahun_penetapan_terakhir, tarif_op_data),
                     "sebelum_stimulus": get_tarif_op(assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'], op_tahun_penetapan_terakhir, tarif_op_data),
                     "ketetapan_bayar": get_tarif_op(assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'], op_tahun_penetapan_terakhir, tarif_op_data),
-                    "tanggal_penetapan": time_penetapan
+                    "tanggal_penetapan": time_penetapan,
+                    "user_penetapan": "admin",
+                    "tanggal_terbit": tanggal_penetapan
                 }
         else:
             print(f"Matching record not found for NOP: {nop}")
@@ -219,6 +225,14 @@ def get_tarif_op(njkp_after_pengenaan, tahun_pajak, tarif_op_data):
             return tarif_op['persentase']
     return 0  # Default to 0 if no matching range is found
 
+def get_jatuh_tempo(tanggal_penetapan, ketetapan_bayar, jatuh_tempo_data):
+    for jatuh_tempo in jatuh_tempo_data:
+        if (jatuh_tempo['tanggal_awal'] <= tanggal_penetapan <= jatuh_tempo['tanggal_akhir'] and
+                jatuh_tempo['mnvalue'] <= ketetapan_bayar <= jatuh_tempo['mxvalue']):
+                return jatuh_tempo['jatuh_tempo']
+        # return 0  # Default to 0 if no matching range is found
+
+
 # Main function
 def main():
     print("Starting the script...")
@@ -226,6 +240,7 @@ def main():
     config_data = load_config()
     persen_pengenaan_data = config_data.get('persen_pengenaan', [])
     tarif_op_data = config_data.get('tarif_op', [])
+    jatuh_tempo_data = config_data.get('jatuh_tempo',[])
 
     if config_data is None:
         print("Failed to load config data. Exiting...")
@@ -263,6 +278,7 @@ def main():
         print("Failed to load Kelas Bangunan data. Exiting...")
         return
 
+
     create_backup(tahun_pajak)
 
     latest_assessment_data = load_and_validate_latest_assessment()
@@ -270,7 +286,7 @@ def main():
         print("No valid assessment data found.")
         return
 
-    updated_pbb_data = update_pbb_data(pbb_data, latest_assessment_data, config_data, kab_code, kab_name, persen_pengenaan_data, tarif_op_data)
+    updated_pbb_data = update_pbb_data(pbb_data, latest_assessment_data, config_data, kab_code, kab_name, persen_pengenaan_data, tarif_op_data, jatuh_tempo_data)
     save_updated_pbb_data(updated_pbb_data, config_data, kab_code, kab_name)
 
 if __name__ == "__main__":
