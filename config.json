@@ -17,8 +17,8 @@
         "auto_assdet" : false,
 
         "debug_max_nop" : {
-            "status" : false,
-        "maxnop" : 100
+            "status" : true,
+        "maxnop" : 1000
     },
     "persen_pengenaan": [
         {

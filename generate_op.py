@@ -253,14 +253,11 @@ if __name__ == "__main__":
         print("No valid NOP data found. Exiting.")
         exit()
     
-    debug_max_nop = config.get('debug_max_nop', {})
-    if debug_max_nop.get('status', False):
-        num_records = debug_max_nop.get('maxnop', len(generated_nops))
+    debug_max_nop = config.get('debug_max_nop')
+    if debug_max_nop.get('status', True): 
+        num_records = debug_max_nop.get('maxnop')
     else:
         num_records = len(generated_nops)
-    # Default to the length of generated_nops if 'num_records' is not found
-    num_records = config.get('debug_max_nop', {}).get('maxnop', len(generated_nops))
-    # Check the status of debug_max_nop and set num_records accordingly
  
     op_znt_options = load_znt_data('CONFIG_DATA/znt_data.json', tahun_pajak)
     op_nilai_bgn_options = config['op_nilai_bgn_options']

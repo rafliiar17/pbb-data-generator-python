@@ -11,7 +11,7 @@ def load_config():
 
 config = load_config()
 kab_name = config.get('kab_name')
-debug_max_nop_status = config.get('debug_max_nop', {'status'})
+debug_max_nop_status = config.get('debug_max_nop', {'status': True})
 debug_max_nop_num = config.get('debug_max_nop', {'maxnop'})
 
 # Function to load kecamatan_kelurahan data from JSON file
@@ -30,10 +30,10 @@ def calculate_max_nops(kecamatan_kelurahan_data):
     max_nops = n_kelurahan * (total_blok * total_no_urut)
     
     # Check if debug_max_nop is set to True and use the maxnop value
-    if debug_max_nop_status and debug_max_nop_status.get('status', False):
+    if debug_max_nop_status and debug_max_nop_status.get('status', True):
         return debug_max_nop_num
-    
-    return max_nops
+    else:
+        return max_nops
 
 # Function to generate NOP and write to file
 def generate_nop_and_write(kode_kab, count, kecamatan_kelurahan_data, kode_blok_start='001', no_urut_start='0001', output_dir='GENERATED_DATA'):
