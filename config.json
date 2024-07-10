@@ -14,11 +14,11 @@
     "wp_pekerjaan_options": ["PNS", "Swasta", "Wiraswasta", "Lainnya"],
         "wp_status_options": ["Pemakai", "Pemilik", "Pengelola", "Penyewa", "Sengketa"],
         "op_nilai_bgn_options": ["System", "Manual"],
-        "auto_assdet" : false,
+        "auto_assdet" : true,
 
         "debug_max_nop" : {
             "status" : true,
-        "maxnop" : 1000
+        "maxnop" : 100
     },
     "persen_pengenaan": [
         {

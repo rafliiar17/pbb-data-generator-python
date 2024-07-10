@@ -134,6 +134,7 @@ def validate_assessment_data(data):
 # Function to update PBB data based on assessment data
 def update_pbb_data(pbb_data, assessment_data, config_data, kab_code, kab_name, persen_pengenaan_data, tarif_op_data):
     op_tahun_penetapan_terakhir = config_data.get('tahun_pajak')
+    time_penetapan = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     for assessment_record in tqdm(assessment_data, desc="Processing Determination Data PBB from " + str(kab_code) + " - " + str(kab_name) + " : "):
         nop = assessment_record.get('nop')
@@ -153,6 +154,9 @@ def update_pbb_data(pbb_data, assessment_data, config_data, kab_code, kab_name, 
                 matching_record['data_penetapan']['op_persen_pengenaan'] = get_persen_pengenaan(matching_record['data_penetapan']['op_njkp_b4_pengenaan'], op_tahun_penetapan_terakhir, persen_pengenaan_data)
                 matching_record['data_penetapan']['op_njkp_after_pengenaan'] = round(matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100)), 0)
                 matching_record['data_penetapan']['op_tarif'] = get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data)
+                matching_record['data_penetapan']['sebelum_stimulus'] = round(get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data) * (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100))), 0)
+                matching_record['data_penetapan']['ketetapan_bayar'] = round(get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data) * (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100))), 0) ## ini klo ada stimulus harus dibikin lagi
+                matching_record['data_penetapan']['tanggal_penetapan'] = time_penetapan
             else:
                 matching_record['data_penetapan'] = {
                     "op_kelas_bumi": assessment_record.get('kelas_bumi'),
@@ -165,7 +169,10 @@ def update_pbb_data(pbb_data, assessment_data, config_data, kab_code, kab_name, 
                     "op_njkp_b4_pengenaan": assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'],
                     "op_persen_pengenaan" : get_persen_pengenaan(matching_record['data_penetapan']['op_njkp_b4_pengenaan'], op_tahun_penetapan_terakhir, persen_pengenaan_data),
                     "op_njkp_after_pengenaan": assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'],
-                    "op_tarif": get_tarif_op(assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'], op_tahun_penetapan_terakhir, tarif_op_data)
+                    "op_tarif": get_tarif_op(assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'], op_tahun_penetapan_terakhir, tarif_op_data),
+                    "sebelum_stimulus": get_tarif_op(assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'], op_tahun_penetapan_terakhir, tarif_op_data),
+                    "ketetapan_bayar": get_tarif_op(assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'], op_tahun_penetapan_terakhir, tarif_op_data),
+                    "tanggal_penetapan": time_penetapan
                 }
         else:
             print(f"Matching record not found for NOP: {nop}")

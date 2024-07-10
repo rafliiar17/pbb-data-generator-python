@@ -8,6 +8,16 @@ def load_config():
     with open(file_path, 'r') as file:
         data = json.load(file)
     return data
+def check_znt_data(file_path):
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    if not data:
+        print(f"ZNT data in {file_path} is empty. Exiting.")
+        exit()
+
+# Check if ZNT data is empty
+znt_data_file_path = 'CONFIG_DATA/znt_data.json'
+check_znt_data(znt_data_file_path)
 
 config = load_config()
 kab_name = config.get('kab_name')
@@ -37,6 +47,10 @@ def calculate_max_nops(kecamatan_kelurahan_data):
 
 # Function to generate NOP and write to file
 def generate_nop_and_write(kode_kab, count, kecamatan_kelurahan_data, kode_blok_start='001', no_urut_start='0001', output_dir='GENERATED_DATA'):
+    if not kecamatan_kelurahan_data:
+        print("No kecamatan_kelurahan data available.")
+        return
+
     os.makedirs(output_dir, exist_ok=True)
     generated_nops = set()
     file_path = os.path.join(output_dir, f"generated_nop.json")
@@ -59,7 +73,7 @@ def generate_nop_and_write(kode_kab, count, kecamatan_kelurahan_data, kode_blok_
                             continue  # Skip if status_kel is false
                         
                         nop, current_no_urut = generate_nop(kode_kab, kecamatan_code, kelurahan_info, total_no_urut, current_blok, current_no_urut)
-                        
+                        pbar.set_description(f"Generating NOP {kode_kab} {kab_name}: {written_count}/{count}")
                         if nop in generated_nops:
                             continue
 
@@ -118,15 +132,18 @@ if __name__ == "__main__":
     kecamatan_kelurahan_file = 'CONFIG_DATA/kecamatan_kelurahan_data.json'
     kecamatan_kelurahan_data = load_kecamatan_kelurahan_data(kecamatan_kelurahan_file)
     
-    max_nops = calculate_max_nops(kecamatan_kelurahan_data)
-    print(f"Maximum possible NOP that can be generated: {max_nops}")
-    
-    random_kecamatan_code = random.choice(list(kecamatan_kelurahan_data.keys()))
-    kode_kab_input = str(random_kecamatan_code)[:4]
-    print(f"Generated kode_kab: {kode_kab_input} - {kab_name}")
-    
-    count = max_nops if isinstance(max_nops, int) else max_nops.get('maxnop', 0)
-    kode_blok_start = '001'
-    no_urut_start = '0001'
-    
-    generate_nop_and_write(kode_kab_input, count, kecamatan_kelurahan_data, kode_blok_start, no_urut_start)
+    if not kecamatan_kelurahan_data:
+        print("No kecamatan_kelurahan data available.")
+    else:
+        max_nops = calculate_max_nops(kecamatan_kelurahan_data)
+        print(f"Maximum possible NOP that can be generated: {max_nops}")
+        
+        random_kecamatan_code = random.choice(list(kecamatan_kelurahan_data.keys()))
+        kode_kab_input = str(random_kecamatan_code)[:4]
+        print(f"Generated kode_kab: {kode_kab_input} - {kab_name}")
+        
+        count = max_nops if isinstance(max_nops, int) else max_nops.get('maxnop', 0)
+        kode_blok_start = '001'
+        no_urut_start = '0001'
+        
+        generate_nop_and_write(kode_kab_input, count, kecamatan_kelurahan_data, kode_blok_start, no_urut_start)
