@@ -55,58 +55,58 @@ def generate_nop_and_write(kode_kab, count, kecamatan_kelurahan_data, kode_blok_
     generated_nops = set()
     file_path = os.path.join(output_dir, f"generated_nop.json")
     
+    written_count = 0
+    current_blok = int(kode_blok_start)
+    current_no_urut = int(no_urut_start)
+    
+    total_no_urut = 999  # Assuming total_no_urut is 999
+    
+    nop_data_list = []  # List to collect NOP data
+    
+    with tqdm(total=count, desc="Generating NOP " + str(kode_kab) + " " + str(kab_name)) as pbar:
+        while written_count < count:
+            # Iterate through each kelurahan
+            for kecamatan_code, kecamatan_info in kecamatan_kelurahan_data.items():
+                for kelurahan_info in kecamatan_info['kelurahan']:
+                    if not kelurahan_info.get('status_kel', False):  # Check if status_kel is true
+                        continue  # Skip if status_kel is false
+                    
+                    nop, current_no_urut = generate_nop(kode_kab, kecamatan_code, kelurahan_info, total_no_urut, current_blok, current_no_urut)
+                    pbar.set_description(f"Generating NOP {kode_kab} {kab_name}: {written_count}/{count}")
+                    if nop in generated_nops:
+                        continue
+
+                    generated_nops.add(nop)
+                    
+                    kode_kec = nop[4:7]
+                    kode_kel = nop[7:10]
+                    kode_blok = nop[10:13]
+                    no_urut = nop[13:17]
+                    kode_tanah = nop[17]
+
+                    nop_data = {
+                        "kode_kab": kode_kab,
+                        "kode_kec": kode_kec,
+                        "kode_kel": kode_kel,
+                        "kode_blok": kode_blok,
+                        "no_urut": no_urut,
+                        "kode_tanah": kode_tanah,
+                        "nop": nop
+                    }
+                    
+                    nop_data_list.append(nop_data)  # Append each NOP data to the list
+                    written_count += 1
+                    pbar.update(1)
+
+                    if current_no_urut > total_no_urut:
+                        current_blok += 1
+                        current_no_urut = 1  # Reset to 0001 if exceeds 999
+            
+            if written_count >= count:
+                break  # Exit while loop if written_count reaches the required count
+    
+    # Write all NOP data to file as a JSON array
     with open(file_path, 'w') as file:
-        written_count = 0
-        current_blok = int(kode_blok_start)
-        current_no_urut = int(no_urut_start)
-        
-        total_no_urut = 999  # Assuming total_no_urut is 999
-        
-        nop_data_list = []  # List to collect NOP data
-        
-        with tqdm(total=count, desc="Generating NOP " + str(kode_kab) + " " + str(kab_name)) as pbar:
-            while written_count < count:
-                # Iterate through each kelurahan
-                for kecamatan_code, kecamatan_info in kecamatan_kelurahan_data.items():
-                    for kelurahan_info in kecamatan_info['kelurahan']:
-                        if not kelurahan_info.get('status_kel', False):  # Check if status_kel is true
-                            continue  # Skip if status_kel is false
-                        
-                        nop, current_no_urut = generate_nop(kode_kab, kecamatan_code, kelurahan_info, total_no_urut, current_blok, current_no_urut)
-                        pbar.set_description(f"Generating NOP {kode_kab} {kab_name}: {written_count}/{count}")
-                        if nop in generated_nops:
-                            continue
-
-                        generated_nops.add(nop)
-                        
-                        kode_kec = nop[4:7]
-                        kode_kel = nop[7:10]
-                        kode_blok = nop[10:13]
-                        no_urut = nop[13:17]
-                        kode_tanah = nop[17]
-
-                        nop_data = {
-                            "kode_kab": kode_kab,
-                            "kode_kec": kode_kec,
-                            "kode_kel": kode_kel,
-                            "kode_blok": kode_blok,
-                            "no_urut": no_urut,
-                            "kode_tanah": kode_tanah,
-                            "nop": nop
-                        }
-                        
-                        nop_data_list.append(nop_data)  # Append each NOP data to the list
-                        written_count += 1
-                        pbar.update(1)
-
-                        if current_no_urut > total_no_urut:
-                            current_blok += 1
-                            current_no_urut = 1  # Reset to 0001 if exceeds 999
-                
-                if written_count >= count:
-                    break  # Exit while loop if written_count reaches the required count
-        
-        # Write all NOP data to file as a JSON array
         file.write(json.dumps(nop_data_list, indent=4))
 
     print(f"{count} NOP numbers generated and saved in {file_path}")

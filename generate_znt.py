@@ -2,6 +2,7 @@ import json
 import argparse
 import random
 import os
+from tqdm import tqdm  # Add tqdm import
 
 from faker import Faker
 
@@ -27,6 +28,9 @@ def generate_znt_data(tahun_pajak_range, kecamatan_kelurahan_data):
     min_year, max_year = tahun_pajak_range
     znt_data = []
     previous_nir_dict = {}
+
+    total_iterations = sum(len(kecamatan_info.get('kelurahan', [])) * (max_year - min_year + 1) for kecamatan_info in kecamatan_kelurahan_data.values())
+    progress_bar = tqdm(total=total_iterations, desc="Generating ZNT data")  # Initialize progress bar
 
     for kecamatan_code, kecamatan_info in kecamatan_kelurahan_data.items():
         for kelurahan in kecamatan_info.get('kelurahan', []):
@@ -57,6 +61,9 @@ def generate_znt_data(tahun_pajak_range, kecamatan_kelurahan_data):
                     # Update previous_nir_dict for the current combination
                     previous_nir_dict[key] = previous_nir + 10  # Increment nir by 10 for the next entry
 
+                    progress_bar.update(1)  # Update progress bar for each znt_code
+
+    progress_bar.close()  # Close progress bar
     return znt_data
 
 def save_znt_data(znt_data):

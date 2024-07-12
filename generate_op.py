@@ -2,9 +2,11 @@ import os
 import json
 import random
 import uuid
+import ijson
 from faker import Faker
 from datetime import datetime
 from tqdm import tqdm
+
 
 fake = Faker('id_ID')
 
@@ -56,6 +58,16 @@ def save_pbb_wajib_pajak(data, file_path):
     with open(file_path, 'w') as f:
         json.dump(data, f, indent=4)
 
+def load_pbb_data(file_path):
+    records = []
+    with open(file_path, 'rb') as file:
+        # Use ijson to parse file iteratively
+        objects = ijson.items(file, 'item')
+        for obj in objects:
+            records.append(obj)
+            # Process records one at a time or in small batches
+    return records
+
 def generate_data(generated_nops, num_records, wp_pekerjaan_options, wp_status_options, op_znt_options, op_nilai_bgn_options, tahun_pajak):
     total_nops = len(generated_nops)
     
@@ -65,7 +77,7 @@ def generate_data(generated_nops, num_records, wp_pekerjaan_options, wp_status_o
     generated_keys = set()  # Initialize as an empty set to store unique (nop, tahun_pajak) pairs
     max_attempts = 100  # Define max_attempts here
 
-    with tqdm(total=min(total_nops, num_records), desc=f"Generating Data OP : {tahun_pajak}") as pbar:
+    with tqdm(total=min(total_nops, num_records), desc=f"Generating Data OP {kab_name} - {tahun_pajak}") as pbar:
         while len(records) < total_nops and len(records) < num_records:
             attempts = 0
             while attempts < max_attempts:
@@ -162,7 +174,6 @@ def generate_data(generated_nops, num_records, wp_pekerjaan_options, wp_status_o
                         "op_penetapan_id" : None,
                         "op_penetapan_status" : False,
                         "op_tahun_penetapan_terakhir" : 0,
-                       
                         "op_kelas_bumi": "",
                         "op_kelas_bgn": "",
                         "op_njop_bumi": 0,

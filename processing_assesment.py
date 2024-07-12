@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 from tqdm import tqdm
 import uuid
+from json.decoder import JSONDecodeError
 
 # Load config data
 def load_config():
@@ -20,9 +21,13 @@ def load_pbb_data(tahun_pajak):
     if not os.path.exists(file_path):
         print(f"PBB data file not found: {file_path}")
         return None
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    except JSONDecodeError as e:
+        print(f"Failed to decode JSON from {file_path}: {e}")
+        return None
 
 # Load znt_data.json data
 def load_znt_data():
@@ -63,33 +68,32 @@ def generate_filename():
         os.makedirs(directory)
     return f"{directory}/pbb_data_assesment_{timestamp}.json"
 
-# Function to get nir based on kelurahan_code, znt_code, and znt_year
+# Function to process and save assessment data incrementally
 def process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahun_pajak, kab_code, kab_name):
-    nir_results = []
-    pbar = tqdm(total=len(pbb_data), desc='Processing Assessment PBB Data from ' + str(kab_code) + " - " + str(kab_name), position=0, leave=True)
-    
-    for pbb_record in pbb_data:
-        nop = pbb_record['nop']
-        luas_bumi = pbb_record['data_op'].get('op_luas_bumi', 0)
-        luas_bgn = pbb_record['data_op'].get('op_luas_bgn', 0)
-        kelurahan_code = int(nop[:10])
-        op_znt = pbb_record['data_op'].get('op_znt', '')
-        status_terbit = pbb_record['data_op'].get('status_terbit')
+    filename = generate_filename()
+    with open(filename, 'w') as file:
+        file.write('[')  # Start of JSON array
+        first_record = True
 
-        for znt_record in znt_data:
-            if (znt_record['kelurahan_code'] == kelurahan_code and
-                znt_record['znt_code'] == op_znt and
-                znt_record['znt_year'] == tahun_pajak):
-                nir = znt_record['nir']
+        pbar = tqdm(total=len(pbb_data), desc='Processing Assessment PBB Data from ' + str(kab_code) + " - " + str(kab_name), position=0, leave=True)
+        znt_lookup = {(z['kelurahan_code'], z['znt_code'], z['znt_year']): z['nir'] for z in znt_data}
+        kelas_bumi_lookup = {(k['fyear'], k['lyear'], k['mnvalue'], k['mxvalue']): k for k in kelas_bumi_data}
+        kelas_bgn_lookup = {(k['fyear'], k['lyear'], k['mnvalue'], k['mxvalue']): k for k in kelas_bgn_data}
 
-                for kelas_bumi_record in kelas_bumi_data:
-                    if (kelas_bumi_record['fyear'] <= tahun_pajak <= kelas_bumi_record['lyear'] and
-                        kelas_bumi_record['mnvalue'] <= nir <= kelas_bumi_record['mxvalue']):
-                        
-                        for kelas_bgn_record in kelas_bgn_data:
-                            if (kelas_bgn_record['fyear'] <= tahun_pajak <= kelas_bgn_record['lyear'] and
-                                kelas_bgn_record['mnvalue'] <= nir <= kelas_bgn_record['mxvalue']):
-                                
+        for pbb_record in pbb_data:
+            nop = pbb_record['nop']
+            luas_bumi = pbb_record['data_op'].get('op_luas_bumi', 0)
+            luas_bgn = pbb_record['data_op'].get('op_luas_bgn', 0)
+            kelurahan_code = int(nop[:10])
+            op_znt = pbb_record['data_op'].get('op_znt', '')
+            status_terbit = pbb_record['data_op'].get('status_terbit')
+
+            nir = znt_lookup.get((kelurahan_code, op_znt, tahun_pajak))
+            if nir is not None:
+                for (fyear, lyear, mnvalue, mxvalue), kelas_bumi_record in kelas_bumi_lookup.items():
+                    if fyear <= tahun_pajak <= lyear and mnvalue <= nir <= mxvalue:
+                        for (fyear, lyear, mnvalue, mxvalue), kelas_bgn_record in kelas_bgn_lookup.items():
+                            if fyear <= tahun_pajak <= lyear and mnvalue <= nir <= mxvalue:
                                 result = {
                                     "penilaian_id": str(uuid.uuid4()),
                                     "nop": nop,
@@ -110,15 +114,20 @@ def process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahu
                                     "user_assessment": "admin",
                                     "status_terbit" : status_terbit
                                 }
-                                nir_results.append(result)
+                                if first_record:
+                                    first_record = False
+                                else:
+                                    file.write(',')
+                                json.dump(result, file, indent=4)
                                 break  # Exit the loop once a match is found
                         break  # Exit the loop once a match is found
-                break  # Exit the loop once a match is found
         
-        pbar.update(1)
-    
-    pbar.close()
-    return nir_results
+            pbar.update(1)
+        
+        pbar.close()
+        file.write(']')  # End of JSON array
+
+    return filename  # Return the filename where data was saved
 
 # Function to validate configuration data
 def validate_config(data):
@@ -234,11 +243,7 @@ def main():
         print("Invalid assessment data. Exiting...")
         return
 
-    filename = generate_filename()
-    with open(filename, 'w') as file:
-        json.dump(assessment_data, file, indent=4)
-    
-    print(f"Assessment data saved to {filename}")
+    print(f"Assessment data saved to {assessment_data}")
 
     # Update time_assessment in pbb_data_op.json
     time_assessment = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

@@ -131,59 +131,53 @@ def update_pbb_data(pbb_data, assessment_data, config_data, kab_code, kab_name, 
     
     not_published_data = []
 
+    # Create a dictionary for quick lookup of PBB data by NOP
+    pbb_data_dict = {item['nop']: item for item in pbb_data}
+
     for assessment_record in tqdm(assessment_data, desc="Processing Determination Data PBB from " + str(kab_code) + " - " + str(kab_name) + " : "):
         nop = assessment_record.get('nop')
-        
-        matching_record = next((item for item in pbb_data if item['nop'] == nop), None)
+        matching_record = pbb_data_dict.get(nop)
+
         if matching_record:
-            if matching_record['data_op']['status_terbit'] == True:
-                matching_record['data_penetapan']['op_kelas_bumi'] = assessment_record.get('kelas_bumi')
-                matching_record['data_penetapan']['op_kelas_bgn'] = assessment_record.get('kelas_bgn')
-                matching_record['data_penetapan']['op_njop_bumi'] = assessment_record.get('njop_bumi')
-                matching_record['data_penetapan']['op_njop_bgn'] = assessment_record.get('njop_bgn')
-                matching_record['data_penetapan']['op_njop'] = assessment_record.get('total_njop')
-                matching_record['data_penetapan']['status_penetapan'] = True
-                matching_record['data_penetapan']['op_tahun_penetapan_terakhir'] = op_tahun_penetapan_terakhir
-                matching_record['data_penetapan']['op_njkp_b4_pengenaan'] = assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp']
-                matching_record['data_penetapan']['op_persen_pengenaan'] = get_persen_pengenaan(matching_record['data_penetapan']['op_njkp_b4_pengenaan'], op_tahun_penetapan_terakhir, persen_pengenaan_data)
-                matching_record['data_penetapan']['op_njkp_after_pengenaan'] = round(matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100)), 0)
-                matching_record['data_penetapan']['op_tarif'] = get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data)
-                matching_record['data_penetapan']['sebelum_stimulus'] = round(get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data) * (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100))), 0)
-                matching_record['data_penetapan']['ketetapan_bayar'] = round(get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data) * (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100))), 0) ## ini klo ada stimulus harus dibikin lagi
-                matching_record['data_penetapan']['tanggal_penetapan'] = time_penetapan
-                matching_record['data_penetapan']['user_penetapan'] = "admin"
-                matching_record['data_penetapan']['tanggal_terbit'] = tanggal_penetapan
-                matching_record['data_penetapan']['jatuh_tempo'] = get_jatuh_tempo(matching_record['data_penetapan']['tanggal_penetapan'], matching_record['data_penetapan']['ketetapan_bayar'], jatuh_tempo_data)
-                matching_record['data_penetapan']['op_penetapan_id'] = str(uuid.uuid4())
-                matching_record['data_penetapan']['op_penetapan_status'] = True
-                matching_record['data_penetapan']['op_penetapan_time'] = time_penetapan
-                matching_record['data_op']['op_penetapan_id'] = str(uuid.uuid4())
-                matching_record['data_op']['op_penetapan_status'] = True
-                matching_record['data_op']['op_penetapan_time'] = time_penetapan
-            if matching_record['data_op']['status_terbit'] == False:
-                matching_record['data_penetapan']['op_kelas_bumi'] = assessment_record.get('kelas_bumi')
-                matching_record['data_penetapan']['op_kelas_bgn'] = assessment_record.get('kelas_bgn')
-                matching_record['data_penetapan']['op_njop_bumi'] = assessment_record.get('njop_bumi')
-                matching_record['data_penetapan']['op_njop_bgn'] = assessment_record.get('njop_bgn')
-                matching_record['data_penetapan']['op_njop'] = assessment_record.get('total_njop')
-                matching_record['data_penetapan']['status_penetapan'] = True
-                matching_record['data_penetapan']['op_tahun_penetapan_terakhir'] = op_tahun_penetapan_terakhir
-                matching_record['data_penetapan']['op_njkp_b4_pengenaan'] = assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp']
-                matching_record['data_penetapan']['op_persen_pengenaan'] = get_persen_pengenaan(matching_record['data_penetapan']['op_njkp_b4_pengenaan'], op_tahun_penetapan_terakhir, persen_pengenaan_data)
-                matching_record['data_penetapan']['op_njkp_after_pengenaan'] = round(matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100)), 0)
-                matching_record['data_penetapan']['op_tarif'] = get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data)
-                matching_record['data_penetapan']['sebelum_stimulus'] = round(get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data) * (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100))), 0)
-                matching_record['data_penetapan']['ketetapan_bayar'] = round(get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data) * (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100))), 0) ## ini klo ada stimulus harus dibikin lagi
-                matching_record['data_penetapan']['tanggal_penetapan'] = time_penetapan
-                matching_record['data_penetapan']['user_penetapan'] = "admin"
-                matching_record['data_penetapan']['tanggal_terbit'] = "-"
-                matching_record['data_penetapan']['jatuh_tempo'] = "-"
-                matching_record['data_penetapan']['op_penetapan_id'] = str(uuid.uuid4())
-                matching_record['data_penetapan']['op_penetapan_status'] = True
-                matching_record['data_penetapan']['op_penetapan_time'] = time_penetapan
-                matching_record['data_op']['op_penetapan_id'] = str(uuid.uuid4())
-                matching_record['data_op']['op_penetapan_status'] = True
-                matching_record['data_op']['op_penetapan_time'] = time_penetapan
+            data_op = matching_record['data_op']
+            if data_op['status_terbit']:
+                data_penetapan = matching_record['data_penetapan']
+                total_njop = assessment_record.get('total_njop')
+                op_njkp_b4_pengenaan = total_njop - data_penetapan['op_njoptkp']
+                op_persen_pengenaan = get_persen_pengenaan(op_njkp_b4_pengenaan, op_tahun_penetapan_terakhir, persen_pengenaan_data)
+                op_njkp_after_pengenaan = round(op_njkp_b4_pengenaan - (op_njkp_b4_pengenaan * (op_persen_pengenaan / 100)), 0)
+                op_tarif = get_tarif_op(op_njkp_after_pengenaan, op_tahun_penetapan_terakhir, tarif_op_data)
+                ketetapan_bayar = round(op_tarif * (op_njkp_b4_pengenaan - (op_njkp_b4_pengenaan * (op_persen_pengenaan / 100))), 0)
+
+                data_penetapan.update({
+                    'op_kelas_bumi': assessment_record.get('kelas_bumi'),
+                    'op_kelas_bgn': assessment_record.get('kelas_bgn'),
+                    'op_njop_bumi': assessment_record.get('njop_bumi'),
+                    'op_njop_bgn': assessment_record.get('njop_bgn'),
+                    'op_njop': total_njop,
+                    'status_penetapan': True,
+                    'op_tahun_penetapan_terakhir': op_tahun_penetapan_terakhir,
+                    'op_njkp_b4_pengenaan': op_njkp_b4_pengenaan,
+                    'op_persen_pengenaan': op_persen_pengenaan,
+                    'op_njkp_after_pengenaan': op_njkp_after_pengenaan,
+                    'op_tarif': op_tarif,
+                    'sebelum_stimulus': ketetapan_bayar,
+                    'ketetapan_bayar': ketetapan_bayar,
+                    'tanggal_penetapan': time_penetapan,
+                    'user_penetapan': "admin",
+                    'tanggal_terbit': tanggal_penetapan,
+                    'jatuh_tempo': get_jatuh_tempo(time_penetapan, ketetapan_bayar, jatuh_tempo_data),
+                    'op_penetapan_id': str(uuid.uuid4()),
+                    'op_penetapan_status': True,
+                    'op_penetapan_time': time_penetapan
+                })
+
+                data_op.update({
+                    'op_penetapan_id': str(uuid.uuid4()),
+                    'op_penetapan_status': True,
+                    'op_penetapan_time': time_penetapan
+                })
+            else:
                 not_published_data.append(matching_record)
     
     # Filter out not published data from pbb_data
