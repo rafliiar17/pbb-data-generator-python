@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 from tqdm import tqdm
 import shutil
+import uuid
 
 # Load config data
 def load_config():
@@ -16,8 +17,8 @@ def load_config():
     return data
 
 # Load pbb_data_{tahun}.json data
-def load_pbb_data(tahun_pajak):
-    file_path = f'DATA_OP/pbb_data_{tahun_pajak}.json'
+def load_pbb_data():
+    file_path = f'SW_PBB/pbb_data_op.json'
     if not os.path.exists(file_path):
         print(f"PBB data file not found: {file_path}")
         return None
@@ -55,18 +56,9 @@ def load_kelas_bgn_data():
         data = json.load(file)
     return data
 
-# Function to generate filename based on current datetime
-def generate_filename():
-    now = datetime.now()
-    timestamp = now.strftime("%Y%m%d_%H%M%S")
-    directory = "DATA_PENILAIAN"
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    return f"{directory}/assessment_{timestamp}.json"
-
 # Function to load and validate the latest assessment data
 def load_and_validate_latest_assessment():
-    folder_path = 'DATA_PENILAIAN/'
+    folder_path = 'SW_PBB/pbb_data_assesment'
     if not os.path.exists(folder_path):
         print(f"Directory not found: {folder_path}")
         return None
@@ -137,13 +129,14 @@ def update_pbb_data(pbb_data, assessment_data, config_data, kab_code, kab_name, 
     time_penetapan = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     tanggal_penetapan = datetime.now().strftime("%Y-%m-%d")
     
+    not_published_data = []
+
     for assessment_record in tqdm(assessment_data, desc="Processing Determination Data PBB from " + str(kab_code) + " - " + str(kab_name) + " : "):
         nop = assessment_record.get('nop')
         
         matching_record = next((item for item in pbb_data if item['nop'] == nop), None)
-        
         if matching_record:
-            if 'data_penetapan' in matching_record:
+            if matching_record['data_op']['status_terbit'] == True:
                 matching_record['data_penetapan']['op_kelas_bumi'] = assessment_record.get('kelas_bumi')
                 matching_record['data_penetapan']['op_kelas_bgn'] = assessment_record.get('kelas_bgn')
                 matching_record['data_penetapan']['op_njop_bumi'] = assessment_record.get('njop_bumi')
@@ -161,52 +154,71 @@ def update_pbb_data(pbb_data, assessment_data, config_data, kab_code, kab_name, 
                 matching_record['data_penetapan']['user_penetapan'] = "admin"
                 matching_record['data_penetapan']['tanggal_terbit'] = tanggal_penetapan
                 matching_record['data_penetapan']['jatuh_tempo'] = get_jatuh_tempo(matching_record['data_penetapan']['tanggal_penetapan'], matching_record['data_penetapan']['ketetapan_bayar'], jatuh_tempo_data)
-            else:
-                matching_record['data_penetapan'] = {
-                    "op_kelas_bumi": assessment_record.get('kelas_bumi'),
-                    "op_kelas_bgn": assessment_record.get('kelas_bgn'),
-                    "op_njop_bumi": assessment_record.get('njop_bumi'),
-                    "op_njop_bgn": assessment_record.get('njop_bgn'),
-                    "op_njop": assessment_record.get('total_njop'),
-                    "status_penetapan": True,
-                    "op_tahun_penetapan_terakhir": op_tahun_penetapan_terakhir,
-                    "op_njkp_b4_pengenaan": assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'],
-                    "op_persen_pengenaan" : get_persen_pengenaan(matching_record['data_penetapan']['op_njkp_b4_pengenaan'], op_tahun_penetapan_terakhir, persen_pengenaan_data),
-                    "op_njkp_after_pengenaan": assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'],
-                    "op_tarif": get_tarif_op(assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'], op_tahun_penetapan_terakhir, tarif_op_data),
-                    "sebelum_stimulus": get_tarif_op(assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'], op_tahun_penetapan_terakhir, tarif_op_data),
-                    "ketetapan_bayar": get_tarif_op(assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp'], op_tahun_penetapan_terakhir, tarif_op_data),
-                    "tanggal_penetapan": time_penetapan,
-                    "user_penetapan": "admin",
-                    "tanggal_terbit": tanggal_penetapan
-                }
-        else:
-            print(f"Matching record not found for NOP: {nop}")
-
-    return pbb_data
+                matching_record['data_penetapan']['op_penetapan_id'] = str(uuid.uuid4())
+                matching_record['data_penetapan']['op_penetapan_status'] = True
+                matching_record['data_penetapan']['op_penetapan_time'] = time_penetapan
+                matching_record['data_op']['op_penetapan_id'] = str(uuid.uuid4())
+                matching_record['data_op']['op_penetapan_status'] = True
+                matching_record['data_op']['op_penetapan_time'] = time_penetapan
+            if matching_record['data_op']['status_terbit'] == False:
+                matching_record['data_penetapan']['op_kelas_bumi'] = assessment_record.get('kelas_bumi')
+                matching_record['data_penetapan']['op_kelas_bgn'] = assessment_record.get('kelas_bgn')
+                matching_record['data_penetapan']['op_njop_bumi'] = assessment_record.get('njop_bumi')
+                matching_record['data_penetapan']['op_njop_bgn'] = assessment_record.get('njop_bgn')
+                matching_record['data_penetapan']['op_njop'] = assessment_record.get('total_njop')
+                matching_record['data_penetapan']['status_penetapan'] = True
+                matching_record['data_penetapan']['op_tahun_penetapan_terakhir'] = op_tahun_penetapan_terakhir
+                matching_record['data_penetapan']['op_njkp_b4_pengenaan'] = assessment_record.get('total_njop') - matching_record['data_penetapan']['op_njoptkp']
+                matching_record['data_penetapan']['op_persen_pengenaan'] = get_persen_pengenaan(matching_record['data_penetapan']['op_njkp_b4_pengenaan'], op_tahun_penetapan_terakhir, persen_pengenaan_data)
+                matching_record['data_penetapan']['op_njkp_after_pengenaan'] = round(matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100)), 0)
+                matching_record['data_penetapan']['op_tarif'] = get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data)
+                matching_record['data_penetapan']['sebelum_stimulus'] = round(get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data) * (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100))), 0)
+                matching_record['data_penetapan']['ketetapan_bayar'] = round(get_tarif_op(matching_record['data_penetapan']['op_njkp_after_pengenaan'], op_tahun_penetapan_terakhir, tarif_op_data) * (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] - (matching_record['data_penetapan']['op_njkp_b4_pengenaan'] * (matching_record['data_penetapan']['op_persen_pengenaan'] / 100))), 0) ## ini klo ada stimulus harus dibikin lagi
+                matching_record['data_penetapan']['tanggal_penetapan'] = time_penetapan
+                matching_record['data_penetapan']['user_penetapan'] = "admin"
+                matching_record['data_penetapan']['tanggal_terbit'] = "-"
+                matching_record['data_penetapan']['jatuh_tempo'] = "-"
+                matching_record['data_penetapan']['op_penetapan_id'] = str(uuid.uuid4())
+                matching_record['data_penetapan']['op_penetapan_status'] = True
+                matching_record['data_penetapan']['op_penetapan_time'] = time_penetapan
+                matching_record['data_op']['op_penetapan_id'] = str(uuid.uuid4())
+                matching_record['data_op']['op_penetapan_status'] = True
+                matching_record['data_op']['op_penetapan_time'] = time_penetapan
+                not_published_data.append(matching_record)
+    
+    # Filter out not published data from pbb_data
+    pbb_data = [item for item in pbb_data if item['data_op']['status_terbit'] == True]
+            
+    return pbb_data, not_published_data
 
 # Function to save updated PBB data to a new file
-def save_updated_pbb_data(pbb_data, config_data, kab_code, kab_name):
+def save_updated_pbb_data(pbb_data, config_data, kab_code, kab_name, not_published_data):
     tahun_pajak = config_data.get('tahun_pajak')
-    directory = f"DATA_PENETAPAN/{tahun_pajak}"
+    directory = f"GW_PBB/{tahun_pajak}"
     if not os.path.exists(directory):
         os.makedirs(directory)
-    filename = f"{directory}/pbb_determination_{tahun_pajak}.json"
+    filename = f"{directory}/pbb_sppt.json"
     
     with open(filename, 'w') as file:
         json.dump(pbb_data, file, indent=4)
     
     print(f"\nUpdated PBB data saved to {filename}")
 
+    if not_published_data:
+        not_published_filename = f"{directory}/pbb_sppt_not_published.json"
+        with open(not_published_filename, 'w') as file:
+            json.dump(not_published_data, file, indent=4)
+        print(f"\nNot published PBB data saved to {not_published_filename}")
+
 # Function to create a backup of the original PBB data file
 def create_backup(tahun_pajak):
-    source_path = f"DATA_OP/pbb_data_{tahun_pajak}.json"
-    backup_dir = f"BACKUP_DATA/{tahun_pajak}"
+    source_path = f"SW_PBB/pbb_data_op.json"
+    backup_dir = f"SW_PBB/BACKUP_DIR/{tahun_pajak}"
     
     if not os.path.exists(backup_dir):
         os.makedirs(backup_dir)
     
-    backup_path = os.path.join(backup_dir, f"pbb_data_{tahun_pajak}_{time.strftime('%Y%m%d_%H%M%S')}.json")
+    backup_path = os.path.join(backup_dir, f"pbb_data_op_{time.strftime('%Y%m%d_%H%M%S')}.json")
     shutil.copy(source_path, backup_path)
     print(f"Backup created: {backup_path}")
 
@@ -232,6 +244,18 @@ def get_jatuh_tempo(tanggal_penetapan, ketetapan_bayar, jatuh_tempo_data):
                 return jatuh_tempo['jatuh_tempo']
         # return 0  # Default to 0 if no matching range is found
 
+def update_time_determination(pbb_data, time_determination, penilaian_id_to_update, op_tahun_penetapan_terakhir):
+    for record in pbb_data:
+        data_op = record.get('data_op', {})
+        data_op['op_penetapan_time'] = time_determination
+        data_op['op_penetapan_status'] = True
+        data_op['op_penetapan_id'] = penilaian_id_to_update
+        data_penetapan = record.get('data_penetapan', {})
+        data_penetapan['op_penetapan_time'] = time_determination
+        data_penetapan['op_penetapan_status'] = True
+        data_penetapan['op_penetapan_id'] = penilaian_id_to_update
+        data_penetapan['op_tahun_penetapan_terakhir'] = op_tahun_penetapan_terakhir
+    return pbb_data
 
 # Main function
 def main():
@@ -254,7 +278,7 @@ def main():
     kab_code = config_data['kab_code']
     kab_name = config_data['kab_name']
 
-    pbb_data = load_pbb_data(tahun_pajak)
+    pbb_data = load_pbb_data()
     if pbb_data is None:
         print("Failed to load PBB data. Exiting...")
         return
@@ -279,6 +303,14 @@ def main():
         return
 
 
+    time_determination = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    penetapan_id_to_update = str(uuid.uuid4())  # Replace with the actual ID
+    op_tahun_penetapan_terakhir = config_data.get('tahun_pajak')
+    updated_pbb_data = update_time_determination(pbb_data, time_determination, penetapan_id_to_update, op_tahun_penetapan_terakhir)
+    with open(f'SW_PBB/pbb_data_op.json', 'w') as file:
+        json.dump(updated_pbb_data, file, indent=4)
+    
+    print("Updated status Penetapan in pbb_data_op.json")
     create_backup(tahun_pajak)
 
     latest_assessment_data = load_and_validate_latest_assessment()
@@ -286,8 +318,8 @@ def main():
         print("No valid assessment data found.")
         return
 
-    updated_pbb_data = update_pbb_data(pbb_data, latest_assessment_data, config_data, kab_code, kab_name, persen_pengenaan_data, tarif_op_data, jatuh_tempo_data)
-    save_updated_pbb_data(updated_pbb_data, config_data, kab_code, kab_name)
+    updated_pbb_data, not_published_data = update_pbb_data(pbb_data, latest_assessment_data, config_data, kab_code, kab_name, persen_pengenaan_data, tarif_op_data, jatuh_tempo_data)
+    save_updated_pbb_data(updated_pbb_data, config_data, kab_code, kab_name, not_published_data)
 
 if __name__ == "__main__":
     main()

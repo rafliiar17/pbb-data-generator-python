@@ -4,6 +4,10 @@ import random
 from tqdm import tqdm
 
 def extract_and_copy_data(input_file, output_file):
+    if not os.path.exists(input_file):
+        print(f"File not found: {input_file}")
+        return
+
     with open(input_file, 'r') as infile:
         data = json.load(infile)
     
@@ -15,11 +19,13 @@ def extract_and_copy_data(input_file, output_file):
         }
         extracted_data.append(extracted_record)
     
+    output_dir = os.path.dirname(output_file)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
     with open(output_file, 'w') as outfile:
         json.dump(extracted_data, outfile, indent=4)
 
-input_file = 'DATA_PENETAPAN/2024/pbb_determination_2024.json'
-output_file = 'GENERATED_DATA/payment_codes.json'
 config_file = 'config.json'
 
 def get_bank_and_merchant_codes(config_file):
@@ -31,6 +37,10 @@ def get_bank_and_merchant_codes(config_file):
     return bank_code,  config_data, merchant_code
 
 bank_code, config_data, merchant_code = get_bank_and_merchant_codes(config_file)
+
+tahun = config_data['tahun_pajak']
+input_file = f'GW_PBB/{tahun}/pbb_sppt.json'
+output_file = 'GW_PBB/payment_codes.json'
 
 extract_and_copy_data(input_file, output_file)
 
@@ -84,6 +94,6 @@ def add_payment_codes(output_file, config_data):
         with open(input_file, 'w') as infile:
             json.dump(pbb_data, infile, indent=4)
     
-    update_pbb_determination('DATA_PENETAPAN/2024/pbb_determination_2024.json', output_file)
+    update_pbb_determination(f'GW_PBB/{tahun}/pbb_sppt.json', output_file)
 
 add_payment_codes(output_file, config_data)

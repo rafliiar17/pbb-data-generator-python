@@ -149,12 +149,20 @@ def generate_data(generated_nops, num_records, wp_pekerjaan_options, wp_status_o
                         "op_luas_bumi": random.randint(1000, 3000),
                         "op_luas_bgn": random.randint(10, 100),
                         "op_status_nilai_bgn" : op_nilai_bgn,
-                        "op_nilai_bgn" : op_nilai_bgn_value
+                        "op_nilai_bgn" : op_nilai_bgn_value,
+                        "op_penilaian_status" : False,
+                        "op_penilaian_id": None,
+                        "op_penilaian_time" : None,
+                        "op_penetapan_status" : False,
+                        "op_penetapan_id": None,
+                        "op_penetapan_time" : None,
+                        "status_terbit" : random.choice([True, False])
                     },
                     "data_penetapan": {
-                        "op_status_penetapan" : False,
+                        "op_penetapan_id" : None,
+                        "op_penetapan_status" : False,
                         "op_tahun_penetapan_terakhir" : 0,
-                        "status_penetapan" : False,
+                       
                         "op_kelas_bumi": "",
                         "op_kelas_bgn": "",
                         "op_njop_bumi": 0,
@@ -242,7 +250,7 @@ if __name__ == "__main__":
     tahun_pajak = config.get('tahun_pajak', datetime.now().year)
     
     # Load generated NOPs once here
-    generated_nops_file_path = 'GENERATED_DATA/generated_nop.json'
+    generated_nops_file_path = 'SW_PBB/generated_nop.json'
     if not os.path.exists(generated_nops_file_path):
         print(f"File not found: {generated_nops_file_path}")
         exit()
@@ -282,8 +290,8 @@ if __name__ == "__main__":
         tahun_pajak
     )
     
-    output_dir = 'DATA_OP'
-    output_file_path = os.path.join(output_dir, f'pbb_data_{tahun_pajak}.json')
+    output_dir = 'SW_PBB'
+    output_file_path = os.path.join(output_dir, f'pbb_data_op.json')
     save_pbb_wajib_pajak(pbb_data_records, output_file_path)
     
     print(f"Generated {len(pbb_data_records)} records and saved to {output_file_path}.")

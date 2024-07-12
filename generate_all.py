@@ -33,10 +33,11 @@ if not config.get('auto_assdet', True):
     if confirm == 'yes':
         subprocess.run('python processing_assesment.py', shell=True)
         print()  # Add a newline after the command execution
-        subprocess.run('python processing_determination.py', shell=True)
-        print()  # Add a newline after the command execution
         subprocess.run('python generate_paycode.py', shell=True)
         print()  # Add a newline after the command execution
+        subprocess.run('python processing_determination.py', shell=True)
+        print()  # Add a newline after the command execution
+        
 else:
     subprocess.run('python processing_assesment.py', shell=True)
     print()  # Add a newline after the command execution
@@ -44,3 +45,4 @@ else:
     print()  # Add a newline after the command execution
     subprocess.run('python generate_paycode.py', shell=True)
     print()  # Add a newline after the command execution
+    

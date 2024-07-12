@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 from tqdm import tqdm
+import uuid
 
 # Load config data
 def load_config():
@@ -15,7 +16,7 @@ def load_config():
 
 # Load pbb_data_{tahun}.json data
 def load_pbb_data(tahun_pajak):
-    file_path = f'DATA_OP/pbb_data_{tahun_pajak}.json'
+    file_path = f'SW_PBB/pbb_data_op.json'
     if not os.path.exists(file_path):
         print(f"PBB data file not found: {file_path}")
         return None
@@ -57,10 +58,10 @@ def load_kelas_bgn_data():
 def generate_filename():
     now = datetime.now()
     timestamp = now.strftime("%Y%m%d_%H%M%S")
-    directory = "DATA_PENILAIAN"
+    directory = "SW_PBB/pbb_data_assesment"
     if not os.path.exists(directory):
         os.makedirs(directory)
-    return f"{directory}/assessment_{timestamp}.json"
+    return f"{directory}/pbb_data_assesment_{timestamp}.json"
 
 # Function to get nir based on kelurahan_code, znt_code, and znt_year
 def process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahun_pajak, kab_code, kab_name):
@@ -73,6 +74,7 @@ def process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahu
         luas_bgn = pbb_record['data_op'].get('op_luas_bgn', 0)
         kelurahan_code = int(nop[:10])
         op_znt = pbb_record['data_op'].get('op_znt', '')
+        status_terbit = pbb_record['data_op'].get('status_terbit')
 
         for znt_record in znt_data:
             if (znt_record['kelurahan_code'] == kelurahan_code and
@@ -89,6 +91,7 @@ def process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahu
                                 kelas_bgn_record['mnvalue'] <= nir <= kelas_bgn_record['mxvalue']):
                                 
                                 result = {
+                                    "penilaian_id": str(uuid.uuid4()),
                                     "nop": nop,
                                     "kelurahan_code": kelurahan_code,
                                     "znt_code": op_znt,
@@ -104,7 +107,8 @@ def process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahu
                                     "njop_bgn": round(luas_bgn * kelas_bgn_record['avgvalue'], 0),
                                     "total_njop": round((luas_bumi * kelas_bumi_record['avgvalue']) + (luas_bgn * kelas_bgn_record['avgvalue']), 0),
                                     "time_assessment": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                    "user_assessment": "admin"
+                                    "user_assessment": "admin",
+                                    "status_terbit" : status_terbit
                                 }
                                 nir_results.append(result)
                                 break  # Exit the loop once a match is found
@@ -151,7 +155,7 @@ def validate_assessment_data(data):
 
 # Function to load and validate the latest assessment data
 def load_and_validate_latest_assessment():
-    folder_path = 'DATA_PENILAIAN/'
+    folder_path = 'SW_PBB/pbb_data_assesment'
     if not os.path.exists(folder_path):
         return None
 
@@ -174,6 +178,15 @@ def load_and_validate_latest_assessment():
             return None
     else:
         return None
+
+# Function to update time_assessment in pbb_data_op.json
+def update_time_assessment(pbb_data, time_assessment, penilaian_id_to_update):
+    for record in pbb_data:
+        data_op = record.get('data_op', {})
+        data_op['op_penilaian_time'] = time_assessment
+        data_op['op_penilaian_status'] = True
+        data_op['op_penilaian_id'] = penilaian_id_to_update
+    return pbb_data
 
 # Main function
 def main():
@@ -226,6 +239,15 @@ def main():
         json.dump(assessment_data, file, indent=4)
     
     print(f"Assessment data saved to {filename}")
+
+    # Update time_assessment in pbb_data_op.json
+    time_assessment = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    penilaian_id_to_update = assessment_data[0]['penilaian_id']  # Replace with the actual ID
+    updated_pbb_data = update_time_assessment(pbb_data, time_assessment, penilaian_id_to_update)
+    with open(f'SW_PBB/pbb_data_op.json', 'w') as file:
+        json.dump(updated_pbb_data, file, indent=4)
+    
+    print("Updated time_assessment in pbb_data_op.json")
 
     load_and_validate_latest_assessment()
 

@@ -46,7 +46,7 @@ def calculate_max_nops(kecamatan_kelurahan_data):
         return max_nops
 
 # Function to generate NOP and write to file
-def generate_nop_and_write(kode_kab, count, kecamatan_kelurahan_data, kode_blok_start='001', no_urut_start='0001', output_dir='GENERATED_DATA'):
+def generate_nop_and_write(kode_kab, count, kecamatan_kelurahan_data, kode_blok_start='001', no_urut_start='0001', output_dir='SW_PBB'):
     if not kecamatan_kelurahan_data:
         print("No kecamatan_kelurahan data available.")
         return
