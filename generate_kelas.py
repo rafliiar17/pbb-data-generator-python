@@ -17,7 +17,7 @@ def generate_kelas_bumi_data(min_year, max_year):
 
     for i in range(num_records):
         kelas_bumi = f"A{i + 1}"
-        mnvalue = 100 + (i * 50)
+        mnvalue = 200 + (i * 50)
         mxvalue = mnvalue + 49
         avgvalue = round((mnvalue + mxvalue) / 2, 0)
 
@@ -41,7 +41,7 @@ def generate_kelas_bangunan_data(min_year, max_year):
 
     for i in range(num_records):
         kelas_bgn = f"A{i + 1}"
-        mnvalue = 100 + (i * 50)
+        mnvalue = 250 + (i * 50)
         mxvalue = mnvalue + 49
         avgvalue = round((mnvalue + mxvalue) / 2, 0)
         avgvalue = round((mnvalue + mxvalue) / 2, 0)

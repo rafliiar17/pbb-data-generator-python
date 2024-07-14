@@ -1,6 +1,5 @@
 import subprocess
 import json
-from tqdm import tqdm
 
 def load_config():
     file_path = 'config.json'
@@ -12,37 +11,52 @@ config = load_config()
 tahun = config.get('tahun_pajak')
 kode = config.get('kab_code')
 nama = config.get('kab_name')
+auto_assdet = config.get('auto_assdet', True)
 
-# Define the commands to be executed with the tax year passed as argument
-initial_commands = [ 
+# Define the base commands to be executed
+commands = [
     'python generate_keckel.py',
-    'python generate_znt.py',
     'python generate_kelas.py',
+    'python generate_znt.py',
     'python generate_nop.py',
-    'python generate_op.py'
+    'python generate_op.py',
+    'python generate_penetapan.py'
 ]
 
-# Execute initial commands sequentially with a progress bar
-for command in tqdm(initial_commands, desc="Executing initial commands", unit="command"):
+# Execute each base command and print result
+for command in commands:
     subprocess.run(command, shell=True)
-    print()  # Add a newline after each command execution
+    print()  # Add a newline after the command execution
+    print(f"{command.split()[1]} completed.")  # Print which script has completed
 
-# Check if auto_assdet is false and prompt for confirmation
-if not config.get('auto_assdet', True):
-    confirm = input(f"Do you want to execute Assesment and Determination for {kode} : {nama} year {tahun} (yes/no): ").strip().lower()
-    if confirm == 'yes':
-        subprocess.run('python processing_assesment.py', shell=True)
-        print()  # Add a newline after the command execution
-        subprocess.run('python generate_paycode.py', shell=True)
-        print()  # Add a newline after the command execution
-        subprocess.run('python processing_determination.py', shell=True)
-        print()  # Add a newline after the command execution
-        
-else:
-    subprocess.run('python processing_assesment.py', shell=True)
+# Append assessment and determination commands if auto_assdet is True
+if auto_assdet:
+    commands.append('python processing_assesment.py')
+    full_command = ' && '.join(commands)
+    subprocess.run(full_command, shell=True)
     print()  # Add a newline after the command execution
-    subprocess.run('python processing_determination.py', shell=True)
+    print("Assessment processing completed.")
+
+    commands.append('python processing_determination.py')
+    full_command = ' && '.join(commands)
+    subprocess.run(full_command, shell=True)
     print()  # Add a newline after the command execution
-    subprocess.run('python generate_paycode.py', shell=True)
+    print("Determination processing completed.")
+
+    commands.append('python generate_paycode.py')
+    full_command = ' && '.join(commands)
+    subprocess.run(full_command, shell=True)
     print()  # Add a newline after the command execution
-    
+    print("Paycode generation completed.")
+
+    commands.append('python processing_final.py')
+
+# Combine commands into a single command string with '&&' to ensure sequential execution
+full_command = ' && '.join(commands)
+
+# Execute the combined command
+subprocess.run(full_command, shell=True)
+print()  # Add a newline after the command execution
+print("Final processing completed.")
+
+print("GENERATING DATA IS SUCCESSED!!")

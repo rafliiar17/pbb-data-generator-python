@@ -169,70 +169,6 @@ def generate_data(generated_nops, num_records, wp_pekerjaan_options, wp_status_o
                         "op_penetapan_id": None,
                         "op_penetapan_time" : None,
                         "status_terbit" : random.choice([True, False])
-                    },
-                    "data_penetapan": {
-                        "op_penetapan_id" : None,
-                        "op_penetapan_status" : False,
-                        "op_tahun_penetapan_terakhir" : 0,
-                        "op_kelas_bumi": "",
-                        "op_kelas_bgn": "",
-                        "op_njop_bumi": 0,
-                        "op_njop_bgn": 0,
-                        "op_njop" : 0,
-                        "op_njoptkp": 0,
-                        "op_njkp_b4_pengenaan": 0,
-                        "op_persen_pengenaan": 0,
-                        "op_njkp_after_pengenaan": 0,
-                        "op_tarif": 0,
-                        "sebelum_stimulus": 0,
-                        "pengali_stimulus": 0,
-                        "pengurang_stimulus": 0,
-                        "selisih_stimulus": 0,
-                        "ketetapan_bayar": 0,
-                        "tanggal_penetapan": {
-                            "$date": None
-                        },
-                        "user_penetapan": "",
-                        "tanggal_terbit": {
-                            "$date": None
-                        },
-                        "jatuh_tempo": {
-                            "$date": None
-                        },
-                        "user_input": fake.user_name(),
-                        "createdAt": {
-                            "$date": None
-                        },
-                        "updatedAt": {
-                            "$date": None
-                        }
-                    },
-                    "data_pembayaran": {
-                        "payment_code": {
-                            "$numberLong": 0
-                        },
-                        "payment_coll_code": {
-                            "$numberLong": 0
-                        },
-                        "payment_flag_status": 0,
-                        "payment_deduction": False,
-                        "payment_installment": False,
-                        "payment_compensation": False,
-                        "payment_flag": True,
-                        "payment_paid": {
-                            "$date": None
-                        },
-                        "payment_settlement_date": None, ## fake.date_time_this_year().strftime('%Y%m%d')
-                        "bank_code": None,
-                        "merchant_code": None,
-                        "channel_code": None,
-                        "payment_ref_num": None, ## str(uuid.uuid4()) -> UUID if payment_flag_status = 1
-                        "payment_gw_refnum": None, ## str(uuid.uuid4()) -> UUID if payment_flag_status = 1
-                        "payment_sw_refnum": None, ## str(uuid.uuid4()) -> UUID if payment_flag_status = 1
-                        "payment_amount": 0,
-                        "payment_amount_ded": 0,
-                        "payment_penalty": 0,
-                        "payment_bill": 0
                     }
                 }
                 
@@ -305,4 +241,8 @@ if __name__ == "__main__":
     output_file_path = os.path.join(output_dir, f'pbb_data_op.json')
     save_pbb_wajib_pajak(pbb_data_records, output_file_path)
     
+    output_wp_file_path = os.path.join(output_dir, f'pbb_data_wp.json')
+    save_pbb_wajib_pajak(data_wp_list, output_wp_file_path)
+    
     print(f"Generated {len(pbb_data_records)} records and saved to {output_file_path}.")
+    print(f"Generated {len(data_wp_list)} WP records and saved to {output_wp_file_path}.")

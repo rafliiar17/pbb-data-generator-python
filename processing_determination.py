@@ -6,11 +6,18 @@ from tqdm import tqdm
 import shutil
 import uuid
 
+# Global debug flag
+DEBUG = False
+
+def print_debug(message):
+    if DEBUG:
+        print(message)
+
 # Load config data
 def load_config():
     file_path = 'config.json'
     if not os.path.exists(file_path):
-        print(f"Configuration file not found: {file_path}")
+        print_debug(f"Configuration file not found: {file_path}")
         return None
     with open(file_path, 'r') as file:
         data = json.load(file)
@@ -20,7 +27,16 @@ def load_config():
 def load_pbb_data():
     file_path = f'SW_PBB/pbb_data_op.json'
     if not os.path.exists(file_path):
-        print(f"PBB data file not found: {file_path}")
+        print_debug(f"PBB data file not found: {file_path}")
+        return None
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
+
+def load_pbb_data_penetapan():
+    file_path = f'SW_PBB/pbb_data_penetapan.json'
+    if not os.path.exists(file_path):
+        print_debug(f"PBB data file not found: {file_path}")
         return None
     with open(file_path, 'r') as file:
         data = json.load(file)
@@ -30,7 +46,7 @@ def load_pbb_data():
 def load_znt_data():
     file_path = 'CONFIG_DATA/znt_data.json'
     if not os.path.exists(file_path):
-        print(f"ZNT data file not found: {file_path}")
+        print_debug(f"ZNT data file not found: {file_path}")
         return None
     with open(file_path, 'r') as file:
         data = json.load(file)
@@ -40,7 +56,7 @@ def load_znt_data():
 def load_kelas_bumi_data():
     file_path = 'CONFIG_DATA/kelas_bumi.json'
     if not os.path.exists(file_path):
-        print(f"Kelas Bumi data file not found: {file_path}")
+        print_debug(f"Kelas Bumi data file not found: {file_path}")
         return None
     with open(file_path, 'r') as file:
         data = json.load(file)
@@ -50,7 +66,7 @@ def load_kelas_bumi_data():
 def load_kelas_bgn_data():
     file_path = 'CONFIG_DATA/kelas_bangunan.json'
     if not os.path.exists(file_path):
-        print(f"Kelas Bangunan data file not found: {file_path}")
+        print_debug(f"Kelas Bangunan data file not found: {file_path}")
         return None
     with open(file_path, 'r') as file:
         data = json.load(file)
@@ -60,7 +76,7 @@ def load_kelas_bgn_data():
 def load_and_validate_latest_assessment():
     folder_path = 'SW_PBB/pbb_data_assesment'
     if not os.path.exists(folder_path):
-        print(f"Directory not found: {folder_path}")
+        print_debug(f"Directory not found: {folder_path}")
         return None
 
     files = os.listdir(folder_path)
@@ -71,23 +87,23 @@ def load_and_validate_latest_assessment():
         latest_file = json_files[0]
         file_path = os.path.join(folder_path, latest_file)
         
-        print(f"\nLatest assessment filename: {latest_file}")
-        print(f"Loading data from {file_path}")
+        print_debug(f"\nLatest assessment filename: {latest_file}")
+        print_debug(f"Loading data from {file_path}")
         try:
             with open(file_path, 'r') as file:
                 data = json.load(file)
             if validate_assessment_data(data):
-                print(f"Validation result for {latest_file}: True")
-                print(f"Successfully loaded and validated assessment data from {latest_file}")
+                print_debug(f"Validation result for {latest_file}: True")
+                print_debug(f"Successfully loaded and validated assessment data from {latest_file}")
                 return data
             else:
-                print(f"Validation result for {latest_file}: False")
+                print_debug(f"Validation result for {latest_file}: False")
                 return None
         except Exception as e:
-            print(f"Error loading data from {latest_file}: {e}")
+            print_debug(f"Error loading data from {latest_file}: {e}")
             return None
     else:
-        print("No assessment files found in the folder.")
+        print_debug("No assessment files found in the folder.")
         return None
 
 # Function to validate configuration data
@@ -100,18 +116,21 @@ def validate_config(data):
 # Function to validate PBB data
 def validate_pbb_data(data):
     if not isinstance(data, list):
-        print("Data is not a list")
+        print_debug("Data is not a list")
         return False
     
     for item in data:
         if not isinstance(item, dict):
-            print(f"Item in list is not a dictionary: {item}")
+            print_debug(f"Item in list is not a dictionary: {item}")
             return False
-        if 'nop' not in item or 'data_penetapan' not in item:
-            print(f"Missing 'nop' or 'data_penetapan' in item: {item}")
+        if 'nop' not in item:
+            print_debug(f"Missing 'nop' in item: {item}")
             return False
+        if 'data_penetapan' not in item:
+            print_debug(f"Missing 'data_penetapan' in item: {item}")
+            item['data_penetapan'] = {}  # Ensure there is a data_penetapan dictionary
         if not isinstance(item['data_penetapan'], dict):
-            print(f"'data_penetapan' is not a dictionary: {item}")
+            print_debug(f"'data_penetapan' is not a dictionary: {item}")
             return False
     
     return True
@@ -134,7 +153,8 @@ def update_pbb_data(pbb_data, assessment_data, config_data, kab_code, kab_name, 
     # Create a dictionary for quick lookup of PBB data by NOP
     pbb_data_dict = {item['nop']: item for item in pbb_data}
 
-    for assessment_record in tqdm(assessment_data, desc="Processing Determination Data PBB from " + str(kab_code) + " - " + str(kab_name) + " : "):
+    # for assessment_record in tqdm(assessment_data, desc="Processing Determination Data PBB from " + str(kab_code) + " - " + str(kab_name) + " : "):
+    for assessment_record in tqdm(assessment_data, desc="Processing Determination Data PBB from " + str(kab_code) + " - " + str(kab_name) + " : ", mininterval=0.1):
         nop = assessment_record.get('nop')
         matching_record = pbb_data_dict.get(nop)
 
@@ -143,7 +163,7 @@ def update_pbb_data(pbb_data, assessment_data, config_data, kab_code, kab_name, 
             if data_op['status_terbit']:
                 data_penetapan = matching_record['data_penetapan']
                 total_njop = assessment_record.get('total_njop')
-                op_njkp_b4_pengenaan = total_njop - data_penetapan['op_njoptkp']
+                op_njkp_b4_pengenaan = total_njop - 0
                 op_persen_pengenaan = get_persen_pengenaan(op_njkp_b4_pengenaan, op_tahun_penetapan_terakhir, persen_pengenaan_data)
                 op_njkp_after_pengenaan = round(op_njkp_b4_pengenaan - (op_njkp_b4_pengenaan * (op_persen_pengenaan / 100)), 0)
                 op_tarif = get_tarif_op(op_njkp_after_pengenaan, op_tahun_penetapan_terakhir, tarif_op_data)
@@ -188,7 +208,7 @@ def update_pbb_data(pbb_data, assessment_data, config_data, kab_code, kab_name, 
 # Function to save updated PBB data to a new file
 def save_updated_pbb_data(pbb_data, config_data, kab_code, kab_name, not_published_data):
     tahun_pajak = config_data.get('tahun_pajak')
-    directory = f"GW_PBB/{tahun_pajak}"
+    directory = f"SW_PBB/pbb_data_determination/{tahun_pajak}"
     if not os.path.exists(directory):
         os.makedirs(directory)
     filename = f"{directory}/pbb_sppt.json"
@@ -196,13 +216,13 @@ def save_updated_pbb_data(pbb_data, config_data, kab_code, kab_name, not_publish
     with open(filename, 'w') as file:
         json.dump(pbb_data, file, indent=4)
     
-    print(f"\nUpdated PBB data saved to {filename}")
+    print_debug(f"\nUpdated PBB data saved to {filename}")
 
     if not_published_data:
         not_published_filename = f"{directory}/pbb_sppt_not_published.json"
         with open(not_published_filename, 'w') as file:
             json.dump(not_published_data, file, indent=4)
-        print(f"\nNot published PBB data saved to {not_published_filename}")
+        print_debug(f"\nNot published PBB data saved to {not_published_filename}")
 
 # Function to create a backup of the original PBB data file
 def create_backup(tahun_pajak):
@@ -214,7 +234,7 @@ def create_backup(tahun_pajak):
     
     backup_path = os.path.join(backup_dir, f"pbb_data_op_{time.strftime('%Y%m%d_%H%M%S')}.json")
     shutil.copy(source_path, backup_path)
-    print(f"Backup created: {backup_path}")
+    print_debug(f"Backup created: {backup_path}")
 
 # Function to get persen pengenaan
 def get_persen_pengenaan(njkp_b4_pengenaan, tahun_pajak, persen_pengenaan_data):
@@ -253,7 +273,7 @@ def update_time_determination(pbb_data, time_determination, penilaian_id_to_upda
 
 # Main function
 def main():
-    print("Starting the script...")
+    print_debug("Starting the script...")
 
     config_data = load_config()
     persen_pengenaan_data = config_data.get('persen_pengenaan', [])
@@ -261,11 +281,11 @@ def main():
     jatuh_tempo_data = config_data.get('jatuh_tempo',[])
 
     if config_data is None:
-        print("Failed to load config data. Exiting...")
+        print_debug("Failed to load config data. Exiting...")
         return
 
     if not validate_config(config_data):
-        print("Invalid config data. Exiting...")
+        print_debug("Invalid config data. Exiting...")
         return
 
     tahun_pajak = config_data['tahun_pajak']
@@ -274,26 +294,26 @@ def main():
 
     pbb_data = load_pbb_data()
     if pbb_data is None:
-        print("Failed to load PBB data. Exiting...")
+        print_debug("Failed to load PBB data. Exiting...")
         return
 
     if not validate_pbb_data(pbb_data):
-        print("Invalid PBB data. Exiting...")
+        print_debug("Invalid PBB data. Exiting...")
         return
 
     znt_data = load_znt_data()
     if znt_data is None:
-        print("Failed to load ZNT data. Exiting...")
+        print_debug("Failed to load ZNT data. Exiting...")
         return
 
     kelas_bumi_data = load_kelas_bumi_data()
     if kelas_bumi_data is None:
-        print("Failed to load Kelas Bumi data. Exiting...")
+        print_debug("Failed to load Kelas Bumi data. Exiting...")
         return
 
     kelas_bgn_data = load_kelas_bgn_data()
     if kelas_bgn_data is None:
-        print("Failed to load Kelas Bangunan data. Exiting...")
+        print_debug("Failed to load Kelas Bangunan data. Exiting...")
         return
 
 
@@ -304,12 +324,12 @@ def main():
     with open(f'SW_PBB/pbb_data_op.json', 'w') as file:
         json.dump(updated_pbb_data, file, indent=4)
     
-    print("Updated status Penetapan in pbb_data_op.json")
+    print_debug("Updated status Penetapan in pbb_data_op.json")
     create_backup(tahun_pajak)
 
     latest_assessment_data = load_and_validate_latest_assessment()
     if latest_assessment_data is None:
-        print("No valid assessment data found.")
+        print_debug("No valid assessment data found.")
         return
 
     updated_pbb_data, not_published_data = update_pbb_data(pbb_data, latest_assessment_data, config_data, kab_code, kab_name, persen_pengenaan_data, tarif_op_data, jatuh_tempo_data)

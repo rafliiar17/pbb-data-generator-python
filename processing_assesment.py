@@ -29,15 +29,33 @@ def load_pbb_data(tahun_pajak):
         print(f"Failed to decode JSON from {file_path}: {e}")
         return None
 
+# Load pbb_penetapan_data.json data
+def load_pbb_penetapan_data():
+    file_path = 'SW_PBB/pbb_data_penetapan.json'
+    if not os.path.exists(file_path):
+        print(f"PBB Penetapan data file not found: {file_path}")
+        return None
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    except JSONDecodeError as e:
+        print(f"Failed to decode JSON from {file_path}: {e}")
+        return None
+
 # Load znt_data.json data
 def load_znt_data():
     file_path = 'CONFIG_DATA/znt_data.json'
     if not os.path.exists(file_path):
         print(f"ZNT data file not found: {file_path}")
         return None
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    except JSONDecodeError as e:
+        print(f"Failed to decode JSON from {file_path}: {e}")
+        return None
 
 # Load kelas_bumi.json data
 def load_kelas_bumi_data():
@@ -45,9 +63,13 @@ def load_kelas_bumi_data():
     if not os.path.exists(file_path):
         print(f"Kelas Bumi data file not found: {file_path}")
         return None
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    except JSONDecodeError as e:
+        print(f"Failed to decode JSON from {file_path}: {e}")
+        return None
 
 # Load kelas_bgn.json data
 def load_kelas_bgn_data():
@@ -55,9 +77,13 @@ def load_kelas_bgn_data():
     if not os.path.exists(file_path):
         print(f"Kelas Bangunan data file not found: {file_path}")
         return None
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    except JSONDecodeError as e:
+        print(f"Failed to decode JSON from {file_path}: {e}")
+        return None
 
 # Function to generate filename based on current datetime
 def generate_filename():
@@ -112,7 +138,7 @@ def process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahu
                                     "total_njop": round((luas_bumi * kelas_bumi_record['avgvalue']) + (luas_bgn * kelas_bgn_record['avgvalue']), 0),
                                     "time_assessment": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                     "user_assessment": "admin",
-                                    "status_terbit" : status_terbit
+                                    "status_terbit": status_terbit
                                 }
                                 if first_record:
                                     first_record = False
@@ -121,9 +147,9 @@ def process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahu
                                 json.dump(result, file, indent=4)
                                 break  # Exit the loop once a match is found
                         break  # Exit the loop once a match is found
-        
+
             pbar.update(1)
-        
+
         pbar.close()
         file.write(']')  # End of JSON array
 
@@ -141,18 +167,18 @@ def validate_pbb_data(data):
     if not isinstance(data, list):
         print("Data is not a list")
         return False
-    
+
     for item in data:
         if not isinstance(item, dict):
             print(f"Item in list is not a dictionary: {item}")
             return False
-        if 'nop' not in item or 'data_penetapan' not in item:
-            print(f"Missing 'nop' or 'data_penetapan' in item: {item}")
+        if 'nop' not in item or 'data_op' not in item:
+            print(f"Missing 'nop' or 'data_op' in item: {item}")
             return False
-        if not isinstance(item['data_penetapan'], dict):
-            print(f"'data_penetapan' is not a dictionary: {item}")
+        if not isinstance(item['data_op'], dict):
+            print(f"'data_op' is not a dictionary: {item}")
             return False
-    
+
     return True
 
 # Function to validate assessment data
@@ -171,11 +197,11 @@ def load_and_validate_latest_assessment():
     files = os.listdir(folder_path)
     json_files = [file for file in files if file.endswith('.json')]
     json_files.sort(key=lambda x: os.path.getmtime(os.path.join(folder_path, x)), reverse=True)
-    
+
     if json_files:
         latest_file = json_files[0]
         file_path = os.path.join(folder_path, latest_file)
-        
+
         try:
             with open(file_path, 'r') as file:
                 data = json.load(file)
@@ -195,7 +221,22 @@ def update_time_assessment(pbb_data, time_assessment, penilaian_id_to_update):
         data_op['op_penilaian_time'] = time_assessment
         data_op['op_penilaian_status'] = True
         data_op['op_penilaian_id'] = penilaian_id_to_update
-    return pbb_data
+
+    # Write the updated data back to the file
+    with open('SW_PBB/pbb_data_op.json', 'w') as file:
+        json.dump(pbb_data, file, indent=4)
+
+# Function to update penetapan data
+def update_penetapan_data(penetapan_data, time_assessment, penilaian_id_to_update):
+    for record in penetapan_data:
+        data_penetapan = record.get('data_penetapan', {})
+        data_penetapan['op_penilaian_time'] = time_assessment
+        data_penetapan['op_penilaian_status'] = True
+        data_penetapan['op_penilaian_id'] = penilaian_id_to_update
+
+    # Write the updated data back to the file
+    with open('SW_PBB/pbb_data_penetapan.json', 'w') as file:
+        json.dump(penetapan_data, file, indent=4)
 
 # Main function
 def main():
@@ -238,21 +279,31 @@ def main():
         print("Failed to load Kelas Bangunan data. Exiting...")
         return
 
-    assessment_data = process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahun_pajak, kab_code, kab_name)
-    if not validate_assessment_data(assessment_data):
-        print("Invalid assessment data. Exiting...")
+    pbb_penetapan_data = load_pbb_penetapan_data()
+    if pbb_penetapan_data is None:
+        print("Failed to load PBB Penetapan data. Exiting...")
         return
 
-    print(f"Assessment data saved to {assessment_data}")
+    filename = process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahun_pajak, kab_code, kab_name)
+    if filename is None:
+        print("Failed to process assessment data. Exiting...")
+        return
+
+    print(f"Assessment data saved to {filename}")
+
+    # Load the assessment data from the saved file
+    with open(filename, 'r') as file:
+        assessment_data = json.load(file)
 
     # Update time_assessment in pbb_data_op.json
     time_assessment = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     penilaian_id_to_update = assessment_data[0]['penilaian_id']  # Replace with the actual ID
     updated_pbb_data = update_time_assessment(pbb_data, time_assessment, penilaian_id_to_update)
-    with open(f'SW_PBB/pbb_data_op.json', 'w') as file:
-        json.dump(updated_pbb_data, file, indent=4)
-    
     print("Updated time_assessment in pbb_data_op.json")
+
+    # Update time_assessment in pbb_data_penetapan.json
+    updated_penetapan_data = update_penetapan_data(pbb_penetapan_data, time_assessment, penilaian_id_to_update)
+    print("Updated time_assessment in pbb_data_penetapan.json")
 
     load_and_validate_latest_assessment()
 

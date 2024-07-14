@@ -7,7 +7,7 @@
         "number_kelurahan": 20
     },
     "year": {
-        "min_year": 1993,
+        "min_year": 2024,
         "max_year": 2024
     },
     "tahun_pajak": 2024,
@@ -18,7 +18,7 @@
 
         "debug_max_nop" : {
             "status" : true,
-        "maxnop" : 1000
+            "maxnop" : 250000
     },
     "persen_pengenaan": [
         {
