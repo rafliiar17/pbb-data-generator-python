@@ -18,7 +18,7 @@
 
         "debug_max_nop" : {
             "status" : true,
-            "maxnop" : 10000
+            "maxnop" : 5000
     },
     "persen_pengenaan": [
         {
