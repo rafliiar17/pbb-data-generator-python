@@ -1,62 +1,53 @@
 import subprocess
+import logging
 import json
+from datetime import datetime
+import os
 
-def load_config():
-    file_path = 'config.json'
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
+# Create log directory if it doesn't exist
+if not os.path.exists('log'):
+    os.makedirs('log')
 
-config = load_config()
-tahun = config.get('tahun_pajak')
-kode = config.get('kab_code')
-nama = config.get('kab_name')
-auto_assdet = config.get('auto_assdet', True)
+# Setup logging with timestamp in the filename
+current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+log_filename = f'log/log_{current_time}.json'
+logging.basicConfig(level=logging.INFO, filename=log_filename, filemode='w',
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Define the base commands to be executed
-commands = [
-    'python generate_keckel.py',
-    'python generate_kelas.py',
-    'python generate_znt.py',
-    'python generate_nop.py',
-    'python generate_op.py',
-    'python generate_penetapan.py'
-]
+def run_script(script_name):
+    """ Helper function to run a script and log the result """
+    try:
+        subprocess.run(['python', script_name], check=True)
+        logging.info(f"Execution of {script_name} completed successfully.")
+    except subprocess.CalledProcessError:
+        logging.error(f"Execution of {script_name} failed.")
 
-# Execute each base command and print result
-for command in commands:
-    subprocess.run(command, shell=True)
-    print()  # Add a newline after the command execution
-    print(f"{command.split()[1]} completed.")  # Print which script has completed
+def main():
+    # Load configuration
+    with open('config.json', 'r') as config_file:
+        config = json.load(config_file)
+    
+    scripts = [
+        'generate_keckel.py',
+        'generate_kelas.py',
+        'generate_znt.py',
+        'generate_nop.py',
+        'generate_op.py',
+        'generate_penetapan.py',
+        'generate_paycode.py'
+    ]
+    
+    # Automatically add assessment scripts if enabled in config
+    if config.get('auto_assdet', False):
+        scripts.extend([
+            'processing_assesment.py',
+            'processing_determination.py',
+            'processing_final.py',
+            'processing_db.py'
+        ])
+    
+    for script in scripts:
+        run_script(script)
 
-# Append assessment and determination commands if auto_assdet is True
-if auto_assdet:
-    commands.append('python processing_assesment.py')
-    full_command = ' && '.join(commands)
-    subprocess.run(full_command, shell=True)
-    print()  # Add a newline after the command execution
-    print("Assessment processing completed.")
-
-    commands.append('python processing_determination.py')
-    full_command = ' && '.join(commands)
-    subprocess.run(full_command, shell=True)
-    print()  # Add a newline after the command execution
-    print("Determination processing completed.")
-
-    commands.append('python generate_paycode.py')
-    full_command = ' && '.join(commands)
-    subprocess.run(full_command, shell=True)
-    print()  # Add a newline after the command execution
-    print("Paycode generation completed.")
-
-    commands.append('python processing_final.py')
-
-# Combine commands into a single command string with '&&' to ensure sequential execution
-full_command = ' && '.join(commands)
-
-# Execute the combined command
-subprocess.run(full_command, shell=True)
-print()  # Add a newline after the command execution
-print("Final processing completed.")
-
-print("GENERATING DATA IS SUCCESSED!!")
+if __name__ == "__main__":
+    main()

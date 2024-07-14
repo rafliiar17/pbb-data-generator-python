@@ -37,8 +37,8 @@ for payment_record in tqdm.tqdm(pbb_data_pembayaran, desc="Updating records"):
     payment_tahun = payment_record['data_pembayaran']['tahun']
     key = (payment_nop, payment_tahun)
 
-    # Prepare data_pembayaran without 'nop' and 'tahun'
-    data_pembayaran = {k: v for k, v in payment_record['data_pembayaran'].items() if k not in ['nop', 'tahun']}
+    # Include '_id' by removing it from the exclusion list
+    data_pembayaran = {k: v for k, v in payment_record['data_pembayaran'].items() if k not in ['nop', 'tahun', '_id']}
 
     # Find the corresponding record in pbb_sppt.json using the index
     if key in sppt_index:
