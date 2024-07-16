@@ -15,7 +15,7 @@ if not os.path.exists('log'):
 directories_to_backup = ['CONFIG_DATA', 'GW_PBB', 'SW_PBB', 'log']
 backup_dir = None  # Initialize backup_dir as None
 if all(os.path.exists(directory) for directory in directories_to_backup):
-    backup_dir = f'PBB_BACKUP_MASTER_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
+    backup_dir = f'PBB_BACKUP_MASTER/DATA_PBB_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
     os.makedirs(backup_dir, exist_ok=True)
 
 if backup_dir is not None:

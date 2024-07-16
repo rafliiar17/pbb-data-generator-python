@@ -1,10 +1,10 @@
 {
     "AppName": "PBB",
-    "kab_code": "3204",
-    "kab_name": "KAB. BANTENG",
+    "kab_code": "6669",
+    "kab_name": "KAB. MEXICO",
     "kec_kel": {
-        "number_kecamatan": 12,
-        "number_kelurahan": 20
+        "number_kecamatan": 7,
+        "number_kelurahan": 15
     },
     "year": {
         "min_year": 2024,
@@ -17,8 +17,8 @@
         "auto_assdet" : true,
 
         "debug_max_nop" : {
-            "status" : true,
-            "maxnop" : 5000
+            "status" : false,
+            "maxnop" : 1000
     },
     "persen_pengenaan": [
         {
