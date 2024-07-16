@@ -3,6 +3,7 @@ import logging
 import json
 from datetime import datetime
 import os
+from tqdm import tqdm  # Import necessary module for progress bar
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -47,7 +48,9 @@ logging.basicConfig(level=logging.INFO, filename=log_filename, filemode='w',
 def run_script(script_name):
     """ Helper function to run a script and log the result """
     try:
-        subprocess.run(['python', script_name], check=True)
+        # Add progress bar for script execution
+        for _ in tqdm(range(10), desc=f'Running {script_name}', colour='green'):  # Assuming 10 steps for progress
+            subprocess.run(['python', script_name], check=True)
         logging.info(f"Execution of {script_name} completed successfully.")
     except subprocess.CalledProcessError:
         logging.error(f"Execution of {script_name} failed.")

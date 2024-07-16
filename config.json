@@ -11,6 +11,7 @@
         "max_year": 2024
     },
     "tahun_pajak": 2024,
+    "maxkelas" : 1000000,
     "wp_pekerjaan_options": ["PNS", "Swasta", "Wiraswasta", "Lainnya"],
         "wp_status_options": ["Pemakai", "Pemilik", "Pengelola", "Penyewa", "Sengketa"],
         "op_nilai_bgn_options": ["System", "Manual"],

@@ -2,6 +2,8 @@ import json
 import random
 import os
 from faker import Faker
+from tqdm import tqdm
+from colorama import Fore
 
 fake = Faker()
 
@@ -65,7 +67,7 @@ if __name__ == "__main__":
     num_kelurahan_per_kecamatan = config_data.get('kec_kel', {}).get('number_kelurahan')
 
     if not kab_code or not num_kecamatan or not num_kelurahan_per_kecamatan:
-        print("Error: 'kab_code', 'num_kecamatan', and 'num_kelurahan_per_kecamatan' must be defined in config.json")
+        print(f"{Fore.RED}Error: 'kab_code', 'num_kecamatan', and 'num_kelurahan_per_kecamatan' must be defined in config.json{Fore.RESET}")
         exit(1)
 
     kecamatan_records = generate_kecamatan_kelurahan_data(kab_code, num_kecamatan, num_kelurahan_per_kecamatan)
@@ -76,6 +78,12 @@ if __name__ == "__main__":
 
     # Save kecamatan and kelurahan data to a single JSON file
     output_path = os.path.join(output_dir, 'kecamatan_kelurahan_data.json')
+    
+    # Add color to the progress bar
+    with tqdm(total=100, desc=f'Generating data for {kab_code} - {kab_name}', bar_format="{l_bar}%s{bar}%s{r_bar}" % (Fore.GREEN, Fore.RESET)) as pbar:
+        for i in range(100):
+            pbar.update(1)
+    
     save_data(kecamatan_records, output_path)
 
     print(f"Generated and saved {num_kecamatan} kecamatan and {num_kelurahan_per_kecamatan} kelurahan records for {kab_code} - {kab_name} to '{output_path}'.")
