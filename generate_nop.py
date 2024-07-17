@@ -1,78 +1,101 @@
 import os
 import random
 import json
-from tqdm import tqdm
+from alive_progress import alive_bar
+from colorama import Fore, init
+
+# Initialize colorama
+init(autoreset=True)
 
 def load_config():
     file_path = 'config.json'
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    except FileNotFoundError:
+        print(f"{Fore.RED}Error: Config file '{file_path}' not found.{Fore.RESET}")
+        exit(1)
+    except json.JSONDecodeError:
+        print(f"{Fore.RED}Error: Config file '{file_path}' is not a valid JSON.{Fore.RESET}")
+        exit(1)
+
 def check_znt_data(file_path):
     with open(file_path, 'r') as file:
-        data = json.load(file)
+        data = json.loads(file.read())
     if not data:
-        print(f"ZNT data in {file_path} is empty. Exiting.")
+        print(f"{Fore.RED}ZNT data in {file_path} is empty. Exiting.{Fore.RESET}")
         exit()
 
-# Check if ZNT data is empty
-znt_data_file_path = 'CONFIG_DATA/znt_data.json'
-check_znt_data(znt_data_file_path)
-
-config = load_config()
-kab_name = config.get('kab_name')
-debug_max_nop_status = config.get('debug_max_nop', {'status': True})
-debug_max_nop_num = config.get('debug_max_nop', {'maxnop'})
-
-# Function to load kecamatan_kelurahan data from JSON file
+# Load kecamatan_kelurahan data from JSON file
 def load_kecamatan_kelurahan_data(file_path):
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    except FileNotFoundError:
+        print(f"{Fore.RED}Error: File '{file_path}' not found.{Fore.RESET}")
+        exit(1)
+    except json.JSONDecodeError:
+        print(f"{Fore.RED}Error: File '{file_path}' is not a valid JSON.{Fore.RESET}")
+        exit(1)
 
-# Function to calculate maximum possible number of NOPs
+# Calculate maximum possible number of NOPs
 def calculate_max_nops(kecamatan_kelurahan_data):
     n_kelurahan = sum(len([kelurahan for kelurahan in kecamatan['kelurahan'] if kelurahan.get('status_kel', False)]) 
                       for kecamatan in kecamatan_kelurahan_data.values())
-    total_blok = 20  # 001 to 999
-    total_no_urut = 999  # 0001 to 999
+    total_blok = 20
+    total_no_urut = 999
     
     max_nops = n_kelurahan * (total_blok * total_no_urut)
-    
-    # Check if debug_max_nop is set to True and use the maxnop value
+
     if debug_max_nop_status and debug_max_nop_status.get('status', True):
         return debug_max_nop_num
     else:
         return max_nops
 
-# Function to generate NOP and write to file
+# Generate NOP using loaded kecamatan_kelurahan data
+def generate_nop(kode_kab, kecamatan_code, kelurahan_info, total_no_urut, current_blok, current_no_urut,
+                 kode_blok_length=3, no_urut_length=4, kode_tanah_length=1):
+    kode_kab = str(kode_kab).zfill(4)
+    kode_kec = str(kecamatan_code)[-3:].zfill(3)
+    kode_kel = str(kelurahan_info['kelurahan_code'])[-3:].zfill(3)
+    kode_blok = str(current_blok).zfill(kode_blok_length)
+    no_urut = str(current_no_urut).zfill(no_urut_length)
+    kode_tanah = '0'
+    
+    nop = f"{kode_kab}{kode_kec}{kode_kel}{kode_blok}{no_urut}{kode_tanah}"
+    
+    next_no_urut = current_no_urut + 1
+    
+    return nop, next_no_urut
+
+# Generate NOP and write to file
 def generate_nop_and_write(kode_kab, count, kecamatan_kelurahan_data, kode_blok_start='001', no_urut_start='0001', output_dir='SW_PBB'):
     if not kecamatan_kelurahan_data:
-        print("No kecamatan_kelurahan data available.")
+        print(f"{Fore.RED}No kecamatan_kelurahan data available.{Fore.RESET}")
         return
 
     os.makedirs(output_dir, exist_ok=True)
     generated_nops = set()
-    file_path = os.path.join(output_dir, f"generated_nop.json")
+    file_path = os.path.join(output_dir, "generated_nop.json")
     
     written_count = 0
     current_blok = int(kode_blok_start)
     current_no_urut = int(no_urut_start)
     
-    total_no_urut = 999  # Assuming total_no_urut is 999
+    total_no_urut = 999
     
-    nop_data_list = []  # List to collect NOP data
+    nop_data_list = []  # Collect NOP data
     
-    with tqdm(total=count, desc="Generating NOP " + str(kode_kab) + " " + str(kab_name)) as pbar:
+    with alive_bar(total=count, title=f"Generating NOP {kode_kab} {kab_name}",enrich_print=False, length=25, bar='classic2', spinner='circles') as pbar:
         while written_count < count:
-            # Iterate through each kelurahan
             for kecamatan_code, kecamatan_info in kecamatan_kelurahan_data.items():
                 for kelurahan_info in kecamatan_info['kelurahan']:
-                    if not kelurahan_info.get('status_kel', False):  # Check if status_kel is true
-                        continue  # Skip if status_kel is false
+                    if not kelurahan_info.get('status_kel', False):
+                        continue
                     
                     nop, current_no_urut = generate_nop(kode_kab, kecamatan_code, kelurahan_info, total_no_urut, current_blok, current_no_urut)
-                    pbar.set_description(f"Generating NOP {kode_kab} {kab_name}: {written_count}/{count}")
                     if nop in generated_nops:
                         continue
 
@@ -94,46 +117,40 @@ def generate_nop_and_write(kode_kab, count, kecamatan_kelurahan_data, kode_blok_
                         "nop": nop
                     }
                     
-                    nop_data_list.append(nop_data)  # Append each NOP data to the list
+                    nop_data_list.append(nop_data)
                     written_count += 1
-                    pbar.update(1)
+                    pbar()
 
                     if current_no_urut > total_no_urut:
                         current_blok += 1
-                        current_no_urut = 1  # Reset to 0001 if exceeds 999
+                        current_no_urut = 1
             
             if written_count >= count:
-                break  # Exit while loop if written_count reaches the required count
+                break
     
-    # Write all NOP data to file as a JSON array
-    with open(file_path, 'w') as file:
-        file.write(json.dumps(nop_data_list, indent=4))
+    # Write all NOP data to file
+    print()
+    with alive_bar(title="Saving NOP data", bar='classic2', stats=False) as progress:
+        with open(file_path, 'w') as file:
+            json.dump(nop_data_list, file, indent=4)  # Dump as a list for valid JSON
+            progress()  # Update progress bar
 
-    print(f"{count} NOP numbers generated and saved in {file_path}")
+    # Calculate file size in MB
+    file_size = os.path.getsize(file_path) / (1024 * 1024)
 
-# Function to generate NOP using loaded kecamatan_kelurahan data
-def generate_nop(kode_kab, kecamatan_code, kelurahan_info, total_no_urut, current_blok, current_no_urut,
-                 kode_blok_length=3, no_urut_length=4, kode_tanah_length=1):
-    kode_kab = str(kode_kab).zfill(4)
-    kode_kec = str(kecamatan_code)[-3:].zfill(3)
-    kode_kel = str(kelurahan_info['kelurahan_code'])[-3:].zfill(3)
-    kode_blok = str(current_blok).zfill(kode_blok_length)
-    no_urut = str(current_no_urut).zfill(no_urut_length)
-    kode_tanah = '0'
-    
-    nop = f"{kode_kab}{kode_kec}{kode_kel}{kode_blok}{no_urut}{kode_tanah}"
-    
-    # Increment no_urut for the next call
-    next_no_urut = current_no_urut + 1
-    
-    return nop, next_no_urut
+    print(f"{count} NOP numbers generated and saved in {file_path} with {len(nop_data_list)} records. File size: {file_size:.2f} MB")
 
 if __name__ == "__main__":
+    config = load_config()
+    kab_name = config.get('kab_name')
+    debug_max_nop_status = config.get('debug_max_nop', {'status': True})
+    debug_max_nop_num = config.get('debug_max_nop', {}).get('maxnop', 0)
+
     kecamatan_kelurahan_file = 'CONFIG_DATA/kecamatan_kelurahan_data.json'
     kecamatan_kelurahan_data = load_kecamatan_kelurahan_data(kecamatan_kelurahan_file)
     
     if not kecamatan_kelurahan_data:
-        print("No kecamatan_kelurahan data available.")
+        print(f"{Fore.RED}No kecamatan_kelurahan data available.{Fore.RESET}")
     else:
         max_nops = calculate_max_nops(kecamatan_kelurahan_data)
         print(f"Maximum possible NOP that can be generated: {max_nops}")

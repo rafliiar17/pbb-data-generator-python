@@ -1,7 +1,14 @@
 import json
 import os  # Import os module to check file existence
 import tqdm  # Import tqdm for progress bar functionality
+import sys
 
+# Set the encoding to utf-8
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+# Change the default encoding for stdout and stderr
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
 # Function to validate file existence
 def validate_file(path):
     if not os.path.exists(path):

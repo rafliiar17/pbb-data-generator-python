@@ -3,22 +3,22 @@
     "kab_code": "6669",
     "kab_name": "KAB. MEXICO",
     "kec_kel": {
-        "number_kecamatan": 7,
-        "number_kelurahan": 15
+        "number_kecamatan": 5,
+        "number_kelurahan": 5
     },
     "year": {
         "min_year": 2024,
         "max_year": 2024
     },
     "tahun_pajak": 2024,
-    "maxkelas" : 1000000,
+    "maxkelas" : 10000,
     "wp_pekerjaan_options": ["PNS", "Swasta", "Wiraswasta", "Lainnya"],
         "wp_status_options": ["Pemakai", "Pemilik", "Pengelola", "Penyewa", "Sengketa"],
         "op_nilai_bgn_options": ["System", "Manual"],
         "auto_assdet" : true,
 
         "debug_max_nop" : {
-            "status" : false,
+            "status" : true,
             "maxnop" : 1000
     },
     "persen_pengenaan": [

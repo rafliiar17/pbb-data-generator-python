@@ -5,7 +5,14 @@ from datetime import datetime
 from tqdm import tqdm
 import shutil
 import uuid
+import sys
 
+# Set the encoding to utf-8
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+# Change the default encoding for stdout and stderr
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
 # Global debug flag
 DEBUG = False
 

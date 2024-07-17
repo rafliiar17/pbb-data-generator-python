@@ -1,20 +1,29 @@
 import json
 import os
-from tqdm import tqdm
+from alive_progress import alive_bar
 from colorama import Fore, init
+import sys
+import io
 
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 # Initialize colorama
 init(autoreset=True)
 
 def load_config():
     file_path = 'config.json'
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    except FileNotFoundError:
+        print(f"{Fore.RED}Error: Config file '{file_path}' not found.{Fore.RESET}")
+        exit(1)
+    except json.JSONDecodeError:
+        print(f"{Fore.RED}Error: Config file '{file_path}' is not a valid JSON.{Fore.RESET}")
+        exit(1)
 
 def generate_kelas_bumi_data(min_year, max_year, num_records, pbar):
     kelas_bumi_data = []
-
     for i in range(num_records):
         kelas_bumi = f"A{i + 1}"
         mnvalue = 200 + (i * 50)
@@ -30,13 +39,12 @@ def generate_kelas_bumi_data(min_year, max_year, num_records, pbar):
             "avgvalue": avgvalue
         }
         kelas_bumi_data.append(record)
-        pbar.update(1)  # Update the progress bar by 1 for each record processed
+        pbar()  # Update the progress bar by 1 for each record processed
 
     return kelas_bumi_data
 
 def generate_kelas_bangunan_data(min_year, max_year, num_records, pbar):
     kelas_bgn_data = []
-
     for i in range(num_records):
         kelas_bgn = f"A{i + 1}"
         mnvalue = 250 + (i * 50)
@@ -52,9 +60,32 @@ def generate_kelas_bangunan_data(min_year, max_year, num_records, pbar):
             "avgvalue": avgvalue
         }
         kelas_bgn_data.append(record)
-        pbar.update(1)  # Update the progress bar by 1 for each record processed
+        pbar()  # Update the progress bar by 1 for each record processed
 
     return kelas_bgn_data
+
+def save_data_with_progress(data, filename, title):
+    total_records = len(data)
+    
+    # Remove the file if it already exists
+    if os.path.exists(filename):
+        os.remove(filename)
+
+    print()
+    # Use alive_bar to display progress
+    with alive_bar(total_records, title=title) as progress:
+        with open(filename, 'w') as file:
+            file.write('[')  # Add opening bracket
+            for i, record in enumerate(data):
+                json.dump(record, file, indent=4)
+                if i < total_records - 1:  # Add comma if not the last record
+                    file.write(',')
+                progress()  # Update progress bar
+            file.write(']')  # Add closing bracket
+    
+    # Calculate file size in MB
+    file_size = os.path.getsize(filename) / (1024 * 1024)  # Convert bytes to MB
+    return file_size, total_records
 
 if __name__ == "__main__":
     config_data = load_config()
@@ -62,33 +93,28 @@ if __name__ == "__main__":
     min_year = config_data.get('year', {}).get('min_year')
     max_year = config_data.get('year', {}).get('max_year')
     num_records = config_data.get('maxkelas', 150)  # Default to 150 if 'maxkelas' is not defined in config
-
-    # Example values for kode_kab and kab_name
     kode_kab = config_data['kab_code']
     kab_name = config_data['kab_name']
-    written_count = 0
 
-    with tqdm(total=num_records * 2, desc="Generating NOP " + str(kode_kab) + " " + str(kab_name), bar_format="{l_bar}%s{bar}%s{r_bar}" % (Fore.GREEN, Fore.RESET)) as pbar:
+    if not min_year or not max_year:
+        print(f"{Fore.RED}Error: 'min_year' and 'max_year' must be defined in config.json.{Fore.RESET}")
+        exit(1)
+
+    # Use alive_bar to display progress
+    total_records = num_records * 2
+    with alive_bar(total=total_records, title=f"Generating Kelas Bumi dan Bangunan : Kode {kode_kab} - {kab_name}", enrich_print=False,length=25, bar='classic2', spinner='wait4', stats=True, monitor=True) as pbar:
         kelas_bumi_records = generate_kelas_bumi_data(min_year, max_year, num_records, pbar)
         kelas_bgn_records = generate_kelas_bangunan_data(min_year, max_year, num_records, pbar)
 
     # Ensure the directory exists
-    output_dir = 'GENERATED_DATA'
+    output_dir = 'CONFIG_DATA'
     os.makedirs(output_dir, exist_ok=True)
 
-    # Save to JSON files
-    output_path_bumi = os.path.join(output_dir, 'kelas_bumi.json')
-    with open(output_path_bumi, 'w') as f:
-        json.dump(kelas_bumi_records, f, indent=4)
+    # Save data with progress bar and file size calculation
+    bumi_filename = os.path.join(output_dir, 'kelas_bumi.json')
+    bumi_size, bumi_records = save_data_with_progress(kelas_bumi_records, bumi_filename, "Saving Kelas Bumi Data")
+    print(f"{Fore.GREEN}Saved Kelas Bumi records for {kode_kab} - {kab_name} to {bumi_filename} with {bumi_records} records. File size: {bumi_size:.2f} MB")
 
-    # Calculate file size in MB
-    file_size_bumi = os.path.getsize(output_path_bumi) / (1024 * 1024)
-    print(f"Generated and saved kelas bumi records to '{output_path_bumi}' - Size: {file_size_bumi:.2f} MB.")
-
-    output_path_bgn = os.path.join(output_dir, 'kelas_bangunan.json')
-    with open(output_path_bgn, 'w') as f:
-        json.dump(kelas_bgn_records, f, indent=4)
-
-    # Calculate file size in MB
-    file_size_bgn = os.path.getsize(output_path_bgn) / (1024 * 1024)
-    print(f"Generated and saved kelas bangunan records to '{output_path_bgn}' - Size: {file_size_bgn:.2f} MB.")
+    bgn_filename = os.path.join(output_dir, 'kelas_bangunan.json')
+    bgn_size, bgn_records = save_data_with_progress(kelas_bgn_records, bgn_filename, "Saving Kelas Bangunan Data")
+    print(f"{Fore.GREEN}Saved Kelas Bangunan records for {kode_kab} - {kab_name} to {bgn_filename} with {bgn_records} records. File size: {bgn_size:.2f} MB")

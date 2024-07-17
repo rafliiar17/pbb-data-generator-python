@@ -1,10 +1,17 @@
 import json
 import os
 from datetime import datetime
-from tqdm import tqdm
-import uuid
+from uuid import uuid4
 from json.decoder import JSONDecodeError
+from alive_progress import alive_bar
+import sys
 
+# Set the encoding to utf-8
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+# Change the default encoding for stdout and stderr
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
 # Load config data
 def load_config():
     file_path = 'config.json'
@@ -101,57 +108,58 @@ def process_assessment(pbb_data, znt_data, kelas_bumi_data, kelas_bgn_data, tahu
         file.write('[')  # Start of JSON array
         first_record = True
 
-        pbar = tqdm(total=len(pbb_data), desc='Processing Assessment PBB Data from ' + str(kab_code) + " - " + str(kab_name), position=0, leave=True)
         znt_lookup = {(z['kelurahan_code'], z['znt_code'], z['znt_year']): z['nir'] for z in znt_data}
         kelas_bumi_lookup = {(k['fyear'], k['lyear'], k['mnvalue'], k['mxvalue']): k for k in kelas_bumi_data}
         kelas_bgn_lookup = {(k['fyear'], k['lyear'], k['mnvalue'], k['mxvalue']): k for k in kelas_bgn_data}
 
-        for pbb_record in pbb_data:
-            nop = pbb_record['nop']
-            luas_bumi = pbb_record['data_op'].get('op_luas_bumi', 0)
-            luas_bgn = pbb_record['data_op'].get('op_luas_bgn', 0)
-            kelurahan_code = int(nop[:10])
-            op_znt = pbb_record['data_op'].get('op_znt', '')
-            status_terbit = pbb_record['data_op'].get('status_terbit')
+        with alive_bar(len(pbb_data), title='Saving Assessment Data', bar='blocks') as bar:
+            for pbb_record in pbb_data:
+                nop = pbb_record['nop']
+                luas_bumi = pbb_record['data_op'].get('op_luas_bumi', 0)
+                luas_bgn = pbb_record['data_op'].get('op_luas_bgn', 0)
+                kelurahan_code = int(nop[:10])
+                op_znt = pbb_record['data_op'].get('op_znt', '')
+                status_terbit = pbb_record['data_op'].get('status_terbit')
 
-            nir = znt_lookup.get((kelurahan_code, op_znt, tahun_pajak))
-            if nir is not None:
-                for (fyear, lyear, mnvalue, mxvalue), kelas_bumi_record in kelas_bumi_lookup.items():
-                    if fyear <= tahun_pajak <= lyear and mnvalue <= nir <= mxvalue:
-                        for (fyear, lyear, mnvalue, mxvalue), kelas_bgn_record in kelas_bgn_lookup.items():
-                            if fyear <= tahun_pajak <= lyear and mnvalue <= nir <= mxvalue:
-                                result = {
-                                    "penilaian_id": str(uuid.uuid4()),
-                                    "nop": nop,
-                                    "kelurahan_code": kelurahan_code,
-                                    "znt_code": op_znt,
-                                    "znt_year": tahun_pajak,
-                                    "znt_nir": nir,
-                                    "luas_bumi": luas_bumi,
-                                    "luas_bgn": luas_bgn,
-                                    "kelas_bumi": kelas_bumi_record['kelas_bumi'],
-                                    "njopm_bumi": kelas_bumi_record['avgvalue'],
-                                    "kelas_bgn": kelas_bgn_record['kelas_bangunan'],
-                                    "njopm_bgn": kelas_bgn_record['avgvalue'],
-                                    "njop_bumi": round(luas_bumi * kelas_bumi_record['avgvalue'], 0),
-                                    "njop_bgn": round(luas_bgn * kelas_bgn_record['avgvalue'], 0),
-                                    "total_njop": round((luas_bumi * kelas_bumi_record['avgvalue']) + (luas_bgn * kelas_bgn_record['avgvalue']), 0),
-                                    "time_assessment": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                    "user_assessment": "admin",
-                                    "status_terbit": status_terbit
-                                }
-                                if first_record:
-                                    first_record = False
-                                else:
-                                    file.write(',')
-                                json.dump(result, file, indent=4)
-                                break  # Exit the loop once a match is found
-                        break  # Exit the loop once a match is found
+                nir = znt_lookup.get((kelurahan_code, op_znt, tahun_pajak))
+                if nir is not None:
+                    for (fyear, lyear, mnvalue, mxvalue), kelas_bumi_record in kelas_bumi_lookup.items():
+                        if fyear <= tahun_pajak <= lyear and mnvalue <= nir <= mxvalue:
+                            for (fyear, lyear, mnvalue, mxvalue), kelas_bgn_record in kelas_bgn_lookup.items():
+                                if fyear <= tahun_pajak <= lyear and mnvalue <= nir <= mxvalue:
+                                    result = {
+                                        "penilaian_id": str(uuid4()),
+                                        "nop": nop,
+                                        "kelurahan_code": kelurahan_code,
+                                        "znt_code": op_znt,
+                                        "znt_year": tahun_pajak,
+                                        "znt_nir": nir,
+                                        "luas_bumi": luas_bumi,
+                                        "luas_bgn": luas_bgn,
+                                        "kelas_bumi": kelas_bumi_record['kelas_bumi'],
+                                        "njopm_bumi": kelas_bumi_record['avgvalue'],
+                                        "kelas_bgn": kelas_bgn_record['kelas_bangunan'],
+                                        "njopm_bgn": kelas_bgn_record['avgvalue'],
+                                        "njop_bumi": round(luas_bumi * kelas_bumi_record['avgvalue'], 0),
+                                        "njop_bgn": round(luas_bgn * kelas_bgn_record['avgvalue'], 0),
+                                        "total_njop": round((luas_bumi * kelas_bumi_record['avgvalue']) + (luas_bgn * kelas_bgn_record['avgvalue']), 0),
+                                        "time_assessment": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                        "user_assessment": "admin",
+                                        "status_terbit": status_terbit
+                                    }
+                                    if first_record:
+                                        first_record = False
+                                    else:
+                                        file.write(',')
+                                    json.dump(result, file, indent=4)
+                                    break  # Exit the loop once a match is found
+                            break  # Exit the loop once a match is found
 
-            pbar.update(1)
+                bar()
 
-        pbar.close()
         file.write(']')  # End of JSON array
+
+    
 
     return filename  # Return the filename where data was saved
 
@@ -288,8 +296,9 @@ def main():
     if filename is None:
         print("Failed to process assessment data. Exiting...")
         return
-
-    print(f"Assessment data saved to {filename}")
+    
+    file_size_mb = os.path.getsize(filename) / (1024 * 1024)
+    print(f"Assessment data saved to {filename} Output file size: {file_size_mb:.2f} MB")
 
     # Load the assessment data from the saved file
     with open(filename, 'r') as file:
