@@ -1,2 +1,8 @@
 # PROJECT_PBB
- generate data 
+Required 
+Python 3.10 
+
+use 
+python3 generate_all.py
+
+config on config.json
